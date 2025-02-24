@@ -1,0 +1,141 @@
+{% extends 'learning/base.html' %}
+
+{% block content %}
+<div class="container fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <i class="fas fa-map-marker-alt me-2"></i>Your Learning Tracks
+                    </h2>
+                    <p class="text-muted">Follow your progress across different learning tracks.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for track_data in tracks_with_progress %}
+        <div class="col-md-6 mb-4">
+            <div class="card track-card">
+                <div class="card-body">
+                    <h3 class="card-title">{{ track_data.track.title }}</h3>
+                    <p class="text-muted mb-4">{{ track_data.track.description }}</p>
+                    
+                    <div class="progress-wrapper mb-3">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ track_data.progress }}%" 
+                                 aria-valuenow="{{ track_data.progress }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ track_data.progress|floatformat:1 }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="track-stats mb-4">
+                        <div class="stat-item">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>{{ track_data.completed_dots }} completed</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-circle text-muted"></i>
+                            <span>{{ track_data.total_dots }} total dots</span>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'track_detail' track_data.track.id %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-2"></i>Continue Learning
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-route fa-3x mb-3 text-muted"></i>
+                    <h4>No Learning Tracks Yet</h4>
+                    <p class="text-muted">Start your learning journey by exploring available tracks!</p>
+                    <a href="{% url 'track_list' %}" class="btn btn-primary mt-3">
+                        <i class="fas fa-compass me-2"></i>Explore Tracks
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .track-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(100, 255, 218, 0.1);
+    }
+
+    .track-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        border-color: rgba(100, 255, 218, 0.2);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .progress-wrapper {
+        background: rgba(17, 34, 64, 0.7);
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(100, 255, 218, 0.1);
+    }
+
+    .progress {
+        height: 1.5rem;
+        background: rgba(100, 255, 218, 0.1);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+        transition: width 1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-dark);
+        font-weight: 600;
+    }
+
+    .track-stats {
+        display: flex;
+        justify-content: space-around;
+        padding: 1rem;
+        background: rgba(17, 34, 64, 0.7);
+        border-radius: 12px;
+        border: 1px solid rgba(100, 255, 218, 0.1);
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .stat-item i {
+        font-size: 1.2rem;
+    }
+
+    .btn-primary {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover i {
+        transform: translateX(5px);
+    }
+</style>
+{% endblock %}

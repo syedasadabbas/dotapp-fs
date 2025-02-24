@@ -1,0 +1,140 @@
+{% extends 'learning/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2><i class="fas fa-sign-in-alt me-2"></i>Welcome Back</h2>
+            <p class="text-muted">Sign in to continue your learning journey</p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+                <label for="id_username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" name="username" class="form-control" id="id_username" required>
+                </div>
+            </div>
+            <div class="form-group mb-4">
+                <label for="id_password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" name="password" class="form-control" id="id_password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </button>
+            <p class="text-center mb-0">
+                Don't have an account? <a href="{% url 'register' %}" class="text-primary">Register here</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<style>
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(17, 34, 64, 0.95), rgba(10, 25, 47, 0.95));
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    background: rgba(17, 34, 64, 0.7);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+    color: var(--text-primary);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.auth-form .form-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.auth-form .input-group-text {
+    background: rgba(13, 25, 48, 0.95);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    color: var(--accent-blue);
+}
+
+.auth-form .form-control {
+    background: rgba(13, 25, 48, 0.95);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    color: white;
+}
+
+.auth-form .form-control:focus {
+    background: rgba(13, 25, 48, 0.95);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.2rem rgba(100, 255, 218, 0.25);
+    color: white;
+}
+
+.auth-form .btn-primary {
+    background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+    border: none;
+    padding: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.auth-form .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(100, 255, 218, 0.3);
+}
+
+.auth-form a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.auth-form a:hover {
+    color: var(--accent-purple);
+}
+
+.alert {
+    background: rgba(13, 25, 48, 0.95);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    color: white;
+}
+
+.alert-success {
+    border-color: var(--accent-blue);
+}
+
+.alert-danger {
+    border-color: #ff6b6b;
+}
+</style>
+{% endblock %}

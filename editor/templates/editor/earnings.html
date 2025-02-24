@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Earnings</title>
+</head>
+<body>
+    <h1>Your Earnings</h1>
+    <table>
+        <tr>
+            <th>Learner</th>
+            <th>Amount (PKR)</th>
+            <th>Date</th>
+        </tr>
+        {% for earning in earnings %}
+        <tr>
+            <td>{{ earning.learner.username }}</td>
+            <td>{{ earning.amount }}</td>
+            <td>{{ earning.date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

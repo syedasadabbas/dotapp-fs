@@ -1,0 +1,245 @@
+{% extends 'learning/base.html' %}
+
+{% block content %}
+<div class="container fade-in">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-line me-2"></i>Your Learning Progress
+                    </h2>
+                    <p class="text-muted">Track your learning achievements and progress over time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card progress-card">
+                <div class="card-body text-center">
+                    <div class="progress-circle mb-3" style="--progress: {{ overall_progress }}">
+                        <div class="progress-circle-inner">
+                            <span class="progress-value">{{ overall_progress|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                    <h3 class="card-title">Overall Progress</h3>
+                    <p class="text-muted">{{ completed_dots }} of {{ total_dots }} dots completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Track Progress</h3>
+                    <div class="progress-chart">
+                        {% for track in tracks %}
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-label">{{ track.title }}</div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ track.progress }}%"
+                                     aria-valuenow="{{ track.progress }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ track.progress|floatformat:1 }}%
+                                </div>
+                            </div>
+                            <div class="progress-stats">
+                                {{ track.completed_dots }}/{{ track.total_dots }}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-book fa-3x mb-3"></i>
+                            <p>No tracks found. Start your learning journey by exploring available tracks!</p>
+                            <a href="{% url 'track_list' %}" class="btn btn-primary">
+                                <i class="fas fa-compass me-2"></i>Explore Tracks
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Recent Achievements</h3>
+                    <div class="timeline">
+                        {% for achievement in recent_achievements %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h5>{{ achievement.title }}</h5>
+                                <p class="text-muted">{{ achievement.description }}</p>
+                                <small class="text-muted">{{ achievement.date|timesince }} ago</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-trophy fa-3x mb-3"></i>
+                            <p>Complete dots to earn achievements!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-card {
+        background: linear-gradient(135deg, rgba(17, 34, 64, 0.95), rgba(10, 25, 47, 0.95));
+        border: none;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-circle {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+        border-radius: 50%;
+        background: conic-gradient(
+            var(--accent-blue) calc(var(--progress) * 1%),
+            rgba(100, 255, 218, 0.1) calc(var(--progress) * 1%)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 30px rgba(100, 255, 218, 0.2);
+    }
+
+    .progress-circle::before {
+        content: '';
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        background: var(--primary-dark);
+        border-radius: 50%;
+    }
+
+    .progress-circle-inner {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .progress-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .progress-bar-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(17, 34, 64, 0.7);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .progress-bar-wrapper:hover {
+        transform: translateX(10px);
+        border-color: rgba(100, 255, 218, 0.2);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-label {
+        min-width: 150px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .progress {
+        flex-grow: 1;
+        height: 1.5rem;
+        background: rgba(100, 255, 218, 0.1);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+        box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+        transition: width 1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-dark);
+        font-weight: 600;
+    }
+
+    .progress-stats {
+        min-width: 80px;
+        text-align: right;
+        color: var(--accent-blue);
+        font-weight: 600;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 3rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background: rgba(100, 255, 218, 0.1);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: -3rem;
+        width: 2rem;
+        height: 2rem;
+        background: var(--primary-dark);
+        border: 2px solid var(--accent-blue);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-blue);
+    }
+
+    .timeline-content {
+        background: rgba(17, 34, 64, 0.7);
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .timeline-content:hover {
+        transform: translateX(10px);
+        border-color: var(--accent-blue);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}

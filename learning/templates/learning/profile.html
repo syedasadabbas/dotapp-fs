@@ -1,0 +1,218 @@
+{% extends "learning/base.html" %}
+
+{% block content %}
+<div class="container py-4 fade-in">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card glass-effect">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4">
+                        <i class="fas fa-user-circle me-2"></i>Edit Profile
+                    </h4>
+
+                    <form method="POST" enctype="multipart/form-data" class="profile-form">
+                        {% csrf_token %}
+                        
+                        <!-- Profile Picture -->
+                        <div class="mb-4 text-center">
+                            <div class="position-relative d-inline-block">
+                                {% if user.learnerprofile.profile_picture %}
+                                    <img src="{{ user.learnerprofile.profile_picture.url }}" 
+                                         alt="Profile Picture" 
+                                         class="rounded-circle border"
+                                         style="width: 120px; height: 120px; object-fit: cover; border-color: var(--accent-blue) !important;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/120" 
+                                         alt="Default Profile Picture" 
+                                         class="rounded-circle border"
+                                         style="width: 120px; height: 120px; object-fit: cover; border-color: var(--accent-blue) !important;">
+                                {% endif %}
+                                <label for="id_profile_picture" class="position-absolute bottom-0 end-0 bg-dark rounded-circle p-2 shadow-sm" style="cursor: pointer;">
+                                    <i class="fas fa-camera" style="color: var(--accent-blue);"></i>
+                                </label>
+                            </div>
+                            {{ profile_form.profile_picture }}
+                        </div>
+
+                        <!-- Personal Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    {{ user_form.first_name }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    {{ user_form.last_name }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            {{ user_form.email }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Learning Style</label>
+                            {{ profile_form.learning_style }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Bio</label>
+                            {{ profile_form.bio }}
+                            <div class="form-text">Tell others about yourself</div>
+                        </div>
+
+                        <!-- Preferences -->
+                        <div class="card glass-effect mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="fas fa-cog me-2"></i>Preferences
+                                </h5>
+                                <div class="form-check mb-2">
+                                    {{ profile_form.email_notifications }}
+                                    <label class="form-check-label" for="{{ profile_form.email_notifications.id_for_label }}">
+                                        Receive email notifications
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ profile_form.progress_reminders }}
+                                    <label class="form-check-label" for="{{ profile_form.progress_reminders.id_for_label }}">
+                                        Get progress reminders
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ profile_form.public_profile }}
+                                    <label class="form-check-label" for="{{ profile_form.public_profile.id_for_label }}">
+                                        Make profile public
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ profile_form.show_progress }}
+                                    <label class="form-check-label" for="{{ profile_form.show_progress.id_for_label }}">
+                                        Show progress to others
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" name="update_profile" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-form .form-control,
+.profile-form .form-select {
+    background-color: rgba(17, 34, 64, 0.7);
+    border: 1px solid rgba(100, 255, 218, 0.1);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.profile-form .form-control:focus,
+.profile-form .form-select:focus {
+    background-color: rgba(17, 34, 64, 0.9);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 0.25rem rgba(100, 255, 218, 0.25);
+}
+
+.profile-form .form-check-input {
+    background-color: rgba(17, 34, 64, 0.7);
+    border-color: rgba(100, 255, 218, 0.3);
+}
+
+.profile-form .form-check-input:checked {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+.profile-form .form-check-label {
+    cursor: pointer;
+}
+
+#id_profile_picture {
+    display: none;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+}
+
+.form-text {
+    color: var(--text-secondary);
+}
+
+.form-label {
+    color: var(--accent-blue);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+textarea.form-control {
+    min-height: 120px;
+}
+
+/* Animations */
+.profile-form .form-control,
+.profile-form .form-select,
+.profile-form .btn {
+    transition: all 0.3s ease;
+}
+
+.profile-form .form-control:hover,
+.profile-form .form-select:hover {
+    border-color: var(--accent-blue);
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview profile picture before upload
+    const profilePicInput = document.getElementById('id_profile_picture');
+    const profilePicPreview = document.querySelector('img[alt="Profile Picture"], img[alt="Default Profile Picture"]');
+    
+    profilePicInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePicPreview.src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // Add animation class to form elements
+    document.querySelectorAll('.profile-form .form-control, .profile-form .form-select').forEach(element => {
+        element.addEventListener('focus', function() {
+            this.style.transform = 'scale(1.02)';
+        });
+        
+        element.addEventListener('blur', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

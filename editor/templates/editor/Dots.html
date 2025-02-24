@@ -1,0 +1,100 @@
+{% extends 'editor/base.html' %}
+
+{% block title %}{{ track.name }} - Dots{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .Dot-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .Dot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .Dot-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .progress {
+            height: 8px;
+            margin-top: 1rem;
+        }
+        .track-header {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        .track-description {
+            max-width: 800px;
+            margin: 1rem auto;
+            opacity: 0.9;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Track Header -->
+    <div class="track-header mb-4">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="display-4">{{ track.title }}</h1>
+                <p class="track-description lead">Explore the Dots available in this track and start your learning journey.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Dot Grid -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for Dot in Dots %}
+                <div class="col">
+                    <div class="card h-100 Dot-card">
+                        <div class="card-body text-center p-4">
+                            <div class="Dot-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <h3 class="h5 card-title mb-3">{{ Dot.title }}</h3>
+                            <p class="card-text text-muted">
+                                {% if Dot.description %}
+                                    {{ Dot.description }}
+                                {% else %}
+                                    Explore the content and resources in this Dot.
+                                {% endif %}
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-center p-3">
+                            <a href="{% url 'view_subdots' Dot.id %}" class="btn btn-primary">
+                                <i class="fas fa-arrow-right me-2"></i>View Subdots
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle display-4 mb-3"></i>
+                        <h2>No Dots Available</h2>
+                        <p>There are currently no Dots in this track.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-5">
+            <a href="{% url 'editor_dashboard' %}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Back to Tracks
+            </a>
+        </div>
+    </div>
+{% endblock %}

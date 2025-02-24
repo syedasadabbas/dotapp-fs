@@ -1,0 +1,856 @@
+{% extends 'editor/base.html' %}
+
+{% block title %}Add Topic - {{ subdot.title }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #editor-container > div {
+            display: none;
+            margin-bottom: 2rem;
+        }
+        #drop-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            background-color: rgba(52, 152, 219, 0.05);
+            transition: all 0.3s ease;
+        }
+        #drop-area:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        .editor-toolbar {
+            background-color: var(--light-color);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        .editor-toolbar button {
+            margin-right: 0.5rem;
+        }
+        #monaco-editor {
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        .content-type-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        /* Audio uploader and timestamp styles */
+        .audio-upload-section {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .audio-upload-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .audio-preview {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .preview-audio {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .timestamp-editor {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .timestamp-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .timestamp-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: transparent;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .timestamp-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .timestamp-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .timestamp-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .timestamp-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .timestamp-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .timestamp-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .timestamp-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .timestamp-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .timestamp-info {
+            flex: 1;
+        }
+
+        .timestamp-time {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .timestamp-content {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.25rem;
+        }
+
+        .timestamp-delete {
+            padding: 0.5rem;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timestamp-delete:hover {
+            background: rgba(255, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .content-selector {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            padding: 0.75rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .content-selector option {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .drag-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .file-size-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.5rem;
+        }
+
+        .audio-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-icon {
+            font-size: 1.2rem;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .browse-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .browse-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        /* Audio Upload Styles */
+        #audio-drop-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            background-color: rgba(52, 152, 219, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        #audio-drop-area.highlight {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+        }
+
+        #audio-drop-area .content-type-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        #audio-drop-area .drag-text {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Timestamp Editor Styles */
+        .timestamp-editor {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .audio-preview {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .preview-audio {
+            border-radius: 8px;
+        }
+
+        .timestamp-controls .btn-group {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .timestamp-controls .btn {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+
+        .timestamp-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .list-group-item {
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(4px);
+        }
+
+        .list-group-item .btn-outline-danger {
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .list-group-item:hover .btn-outline-danger {
+            opacity: 1;
+        }
+
+        /* File input styles */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-input-wrapper .btn {
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+
+        /* Status text */
+        .file-status {
+            margin-top: 1rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .file-status i {
+            margin-right: 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h1 class="page-title">Add Topic for {{ subdot.title }}</h1>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" class="form-control form-control-lg" name="title" required>
+                            </div>
+
+                            <div class="editor-toolbar card mb-4">
+                                <div class="card-body d-flex flex-wrap gap-2">
+                                    <button type="button" id="add-text" class="btn btn-outline-primary">
+                                        <i class="fas fa-paragraph me-2"></i>Add Text
+                                    </button>
+                                    <button type="button" id="add-code" class="btn btn-outline-primary">
+                                        <i class="fas fa-code me-2"></i>Add Code
+                                    </button>
+                                    <button type="button" id="add-image" class="btn btn-outline-primary">
+                                        <i class="fas fa-image me-2"></i>Add Image
+                                    </button>
+                                    <button type="button" id="add-audio" class="btn btn-outline-primary">
+                                        <i class="fas fa-music me-2"></i>Add Audio
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="editor-container">
+                                <div id="text-editor" class="card">
+                                    <div class="card-header bg-light">
+                                        <i class="fas fa-paragraph me-2"></i>Text Content
+                                    </div>
+                                    <div class="card-body">
+                                        <textarea class="tinymce" name="content"></textarea>
+                                    </div>
+                                </div>
+
+                                <div id="code-editor" class="card">
+                                    <div class="card-header bg-light">
+                                        <i class="fas fa-code me-2"></i>Code Editor
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="monaco-editor" style="height: 400px;"></div>
+                                        <textarea name="code" id="code-hidden" style="display: none;"></textarea>
+                                    </div>
+                                </div>
+
+                                <div id="image-uploader" class="card">
+                                    <div class="card-header bg-light">
+                                        <i class="fas fa-image me-2"></i>Image Upload
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="drop-area">
+                                            <i class="fas fa-cloud-upload-alt content-type-icon"></i>
+                                            <p class="mb-3">Drag and drop image files here or</p>
+                                            <div class="file-input-wrapper">
+                                                <button type="button" class="btn btn-outline-primary">
+                                                    <i class="fas fa-folder-open me-2"></i>Browse Files
+                                                </button>
+                                                <input type="file" name="image" accept="image/*">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="audio-uploader" class="card">
+                                    <div class="card-header bg-light">
+                                        <i class="fas fa-music me-2"></i>Audio Upload
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="audio-drop-area">
+                                            <i class="fas fa-music content-type-icon"></i>
+                                            <h4 class="drag-text">Drag and drop your audio file</h4>
+                                            <p class="text-muted mb-3">or</p>
+                                            <div class="file-input-wrapper">
+                                                <button type="button" class="btn btn-outline-primary">
+                                                    <i class="fas fa-folder-open me-2"></i>Browse Files
+                                                </button>
+                                                <input type="file" name="audio" accept="audio/*" id="audio-input">
+                                            </div>
+                                            <p class="file-status">
+                                                <i class="fas fa-info-circle"></i>
+                                                Supported formats: MP3, WAV, AAC (Max: 50MB)
+                                            </p>
+                                        </div>
+
+                                        <!-- Audio Preview and Timestamp Editor -->
+                                        <div class="timestamp-editor mt-4" style="display: none;" id="timestamp-editor">
+                                            <h5 class="mb-3">
+                                                <i class="fas fa-clock me-2"></i>Audio Preview & Timestamps
+                                            </h5>
+                                            
+                                            <div class="audio-preview mb-4">
+                                                <audio controls class="preview-audio w-100" id="preview-audio"></audio>
+                                            </div>
+
+                                            <div class="timestamp-controls">
+                                                <select class="form-select mb-3" id="content-selector">
+                                                    <!-- Will be populated dynamically -->
+                                                </select>
+
+                                                <div class="btn-group w-100">
+                                                    <button type="button" class="btn btn-outline-primary" id="mark-start">
+                                                        <i class="fas fa-play me-2"></i>Mark Start
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary" id="mark-end">
+                                                        <i class="fas fa-stop me-2"></i>Mark End
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-success" id="add-timestamp">
+                                                        <i class="fas fa-plus me-2"></i>Add Timestamp
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="timestamp-list list-group mt-3" id="timestamp-list">
+                                                <!-- Timestamps will be listed here -->
+                                            </div>
+
+                                            <input type="hidden" name="timestamps" id="timestamps-input">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'view_topics' subdot.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Topics
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>Save Topic
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://cdn.tiny.cloud/1/ssut2f8a05vvduw6y28mzeurxq1wc9l0po6o21hpofirco7h/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        // Initialize TinyMCE with better configuration
+        tinymce.init({
+            selector: '.tinymce',
+            height: 400,
+            menubar: true,
+            plugins: [
+                'advlist autolink lists link image charmap print preview anchor',
+                'searchreplace visualblocks code fullscreen',
+                'insertdatetime media table paste code help wordcount'
+            ],
+            toolbar: 'undo redo | formatselect | bold italic backcolor | \
+                     alignleft aligncenter alignright alignjustify | \
+                     bullist numlist outdent indent | removeformat | help'
+        });
+
+        let monacoEditor;
+
+        // Load Monaco Editor with better configuration
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: '',
+                language: 'javascript',
+                theme: 'vs-light',
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontSize: 14,
+                lineNumbers: 'on',
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                readOnly: false,
+                cursorStyle: 'line',
+                automaticLayout: true
+            });
+
+            monacoEditor.onDidChangeModelContent(() => {
+                document.getElementById('code-hidden').value = monacoEditor.getValue();
+            });
+        });
+
+        // Content type buttons
+        document.getElementById('add-text').addEventListener('click', function() {
+            document.getElementById('text-editor').style.display = 'block';
+        });
+
+        document.getElementById('add-code').addEventListener('click', function() {
+            document.getElementById('code-editor').style.display = 'block';
+            if (monacoEditor) {
+                monacoEditor.layout();
+            }
+        });
+
+        document.getElementById('add-image').addEventListener('click', function() {
+            document.getElementById('image-uploader').style.display = 'block';
+        });
+
+        document.getElementById('add-audio').addEventListener('click', function() {
+            document.getElementById('audio-uploader').style.display = 'block';
+        });
+
+        // Enhanced drag and drop functionality
+        const dropAreas = document.querySelectorAll('#drop-area');
+        dropAreas.forEach(dropArea => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                dropArea.classList.add('border-primary');
+            }
+
+            function unhighlight(e) {
+                dropArea.classList.remove('border-primary');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            function handleFiles(files) {
+                const fileInput = dropArea.querySelector('input[type="file"]');
+                if (fileInput && files.length > 0) {
+                    fileInput.files = files;
+                    // Trigger change event if needed
+                    const event = new Event('change', { bubbles: true });
+                    fileInput.dispatchEvent(event);
+                }
+            }
+        });
+
+        // Form validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })()
+
+        // Audio timestamp functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentStartTime = null;
+            let currentEndTime = null;
+            let timestamps = [];
+            let contentElements = new Map();
+            
+            const audioInput = document.getElementById('audio-input');
+            const previewAudio = document.getElementById('preview-audio');
+            const timestampEditor = document.getElementById('timestamp-editor');
+            const contentSelector = document.getElementById('content-selector');
+            const markStartBtn = document.getElementById('mark-start');
+            const markEndBtn = document.getElementById('mark-end');
+            const addTimestampBtn = document.getElementById('add-timestamp');
+            const timestampList = document.getElementById('timestamp-list');
+            const timestampsInput = document.getElementById('timestamps-input');
+            const audioDropArea = document.getElementById('audio-drop-area');
+
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                audioDropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                audioDropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                audioDropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                audioDropArea.classList.add('highlight');
+            }
+
+            function unhighlight(e) {
+                audioDropArea.classList.remove('highlight');
+            }
+
+            audioDropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            function handleFiles(files) {
+                if (files[0] && files[0].type.startsWith('audio/')) {
+                    const file = files[0];
+                    const url = URL.createObjectURL(file);
+                    previewAudio.src = url;
+                    timestampEditor.style.display = 'block';
+                    updateContentSelector();
+                }
+            }
+
+            // Handle audio file selection
+            audioInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    handleFiles(this.files);
+                }
+            });
+
+            // Update content selector
+            function updateContentSelector() {
+                contentSelector.innerHTML = '';
+                
+                // Add text content
+                const textContent = document.querySelector('textarea[name="content"]');
+                if (textContent) {
+                    contentElements.set('text-content', {
+                        id: 'text-content',
+                        type: 'text',
+                        element: textContent
+                    });
+                    addContentOption('Text Content', 'text-content');
+                }
+
+                // Add code content
+                const codeContent = document.getElementById('monaco-editor');
+                if (codeContent) {
+                    contentElements.set('code-content', {
+                        id: 'code-content',
+                        type: 'code',
+                        element: codeContent
+                    });
+                    addContentOption('Code Content', 'code-content');
+                }
+
+                // Add image content
+                const imageInput = document.querySelector('input[name="image"]');
+                if (imageInput && imageInput.files.length > 0) {
+                    contentElements.set('image-content', {
+                        id: 'image-content',
+                        type: 'image',
+                        element: imageInput
+                    });
+                    addContentOption('Image Content', 'image-content');
+                }
+            }
+
+            function addContentOption(label, value) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                contentSelector.appendChild(option);
+            }
+
+            // Handle timestamp marking
+            markStartBtn.addEventListener('click', function() {
+                currentStartTime = previewAudio.currentTime;
+                markStartBtn.classList.add('active');
+                markEndBtn.classList.remove('active');
+            });
+
+            markEndBtn.addEventListener('click', function() {
+                currentEndTime = previewAudio.currentTime;
+                markEndBtn.classList.add('active');
+            });
+
+            addTimestampBtn.addEventListener('click', function() {
+                if (currentStartTime !== null && currentEndTime !== null && contentSelector.value) {
+                    const timestamp = {
+                        start: currentStartTime,
+                        end: currentEndTime,
+                        contentId: contentSelector.value,
+                        type: contentElements.get(contentSelector.value).type
+                    };
+
+                    timestamps.push(timestamp);
+                    updateTimestampsList();
+                    updateTimestampsInput();
+
+                    // Reset states
+                    currentStartTime = null;
+                    currentEndTime = null;
+                    markStartBtn.classList.remove('active');
+                    markEndBtn.classList.remove('active');
+                }
+            });
+
+            // Update timestamps list
+            function updateTimestampsList() {
+                timestampList.innerHTML = '';
+                timestamps.forEach((timestamp, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock me-2"></i>
+                                <span class="fw-bold">${formatTime(timestamp.start)} - ${formatTime(timestamp.end)}</span>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas ${getContentIcon(timestamp.type)} me-1"></i>
+                                ${getContentLabel(timestamp.type)}
+                            </small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTimestamp(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    timestampList.appendChild(item);
+                });
+            }
+
+            function getContentIcon(type) {
+                switch(type) {
+                    case 'text': return 'fa-paragraph';
+                    case 'code': return 'fa-code';
+                    case 'image': return 'fa-image';
+                    default: return 'fa-file';
+                }
+            }
+
+            function getContentLabel(type) {
+                switch(type) {
+                    case 'text': return 'Text Content';
+                    case 'code': return 'Code Block';
+                    case 'image': return 'Image Content';
+                    default: return 'Content';
+                }
+            }
+
+            // Format time in seconds to MM:SS format
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.floor(seconds % 60);
+                return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+
+            // Update hidden input with timestamps data
+            function updateTimestampsInput() {
+                timestampsInput.value = JSON.stringify(timestamps);
+            }
+
+            // Remove timestamp
+            window.removeTimestamp = function(index) {
+                timestamps.splice(index, 1);
+                updateTimestampsList();
+                updateTimestampsInput();
+            };
+        });
+    </script>
+{% endblock %}

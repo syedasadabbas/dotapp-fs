@@ -1,0 +1,1382 @@
+{% extends 'learning/base.html' %}
+
+{% block content %}
+
+<!-- Background Circuit Lines -->
+<div class="circuit-lines">
+    <div class="circuit-line"></div>
+    <div class="circuit-line"></div>
+    <div class="circuit-line"></div>
+    <div class="circuit-line"></div>
+</div>
+
+<div class="progress-tracker-wrapper">
+    <div class="progress-tracker">
+        {% for dot in track.dots.all %}
+        <div class="module">
+            <div class="module-header">
+                <div class="dot-circle {% if dot.completed %}completed{% endif %}">
+                    <i class="fas fa-circle"></i>
+                </div>
+                {{ dot.title }}
+            </div>
+            <div class="module-content">
+                {% for sub in dot.subdots.all %}
+                <a href="{% url 'subdot_detail' subdot.id %}" class="submodule {% if sub.id == subdot.id %}active{% endif %}">
+                    <span class="status-indicator {% if sub.completed %}status-complete{% elif sub.in_progress %}status-in-progress{% endif %}">
+                       <!-- {% if sub.completed %}✓{% elif sub.in_progress %}○{% else %}○{% endif %} -->
+                        {% if sub.completed %}●{% elif sub.in_progress %}○{% else %}○{% endif %}
+                    </span>
+                    {{ sub.title }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="content-header">
+        <h1 class="content-title">{{ subdot.title }}</h1>
+        <div class="content-meta">
+            <span class="meta-tag tag-time">
+                <i class="fas fa-clock"></i>
+                5 mins
+            </span>
+            <span class="meta-tag tag-difficulty">
+                <i class="fas fa-signal"></i>
+                Basic
+            </span>
+        </div>
+    </div>
+
+    <!-- Content Tab -->
+    <div class="tab-pane fade show active" id="content">
+        <div class="content-section">
+            {% if topics %}
+                {% for topic in topics %}
+                <div class="container-box">
+                    <h3 class="content-title">{{ topic.title }}</h3>
+                    <p class="content-description">{{ topic.content|safe }}</p>
+                </div>
+                    <!-- Show Code if Available -->
+                    {% if topic.code %}
+                    <div class="container-box">
+                        <div class="code-container">
+                            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                            <pre><code>{{ topic.code }}</code></pre>
+                        </div>
+                    </div>
+
+                    {% endif %}
+
+                    {% if topic.image %}
+                    <div class="container-box image-container">
+                        <img src="{{ topic.image.url }}" alt="Topic Image" onclick="openModal(this.src)">
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <!-- Fullscreen Modal for Image -->
+                <div id="imageModal" class="image-modal" onclick="closeModal()">
+                    <span class="close">&times;</span>
+                    <img id="modalImage" src="">
+                </div>
+            {% else %}
+                <p>No content available.</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Modern Audio Player (Fixed at Bottom) -->
+    {% if topic_audio %}
+    <div class="audio-player-container">
+        <audio id="audioPlayer" controls>
+            <source src="{{ topic_audio }}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        <div class="audio-controls">
+            <button onclick="changePlaybackSpeed(0.75)">0.75x</button>
+            <button onclick="changePlaybackSpeed(1)" class="active">1x</button>
+            <button onclick="changePlaybackSpeed(1.5)">1.5x</button>
+            <button onclick="changePlaybackSpeed(2)">2x</button>
+        </div>
+    </div>
+    {% else %}
+    <p>No recorded audio available.</p>
+    {% endif %}
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+        <i class="fas fa-tasks"></i>
+        <div>
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: {{ dot_progress }}%"></div>
+            </div>
+            <small>{{ dot_progress|floatformat:0 }}% Complete</small>
+        </div>
+    </div>
+
+    <!-- Time Spent Display -->
+    {% if progress.time_spent %}
+    <div class="time-spent">
+        <i class="fas fa-clock"></i>
+        Time spent: {{ progress.time_spent|time:"H:i:s" }}
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="action-buttons-container">
+        <div class="action-button-group">
+            <form action="{% url 'mark_completed' subdot.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="action-button {% if progress.completed %}complete{% endif %}" 
+                        title="{% if progress.completed %}Completed{% else %}Mark as Complete{% endif %}">
+                    <i class="fas {% if progress.completed %}fa-check-circle{% else %}fa-check{% endif %}"></i>
+                </button>
+            </form>
+            
+            <a href="{% url 'ask_instructor' subdot.id %}" class="action-button" title="Ask AI Assistant">
+                <i class="fas fa-robot"></i>
+            </a>
+
+            <form action="{% url 'toggle_bookmark' subdot.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="action-button {% if is_bookmarked %}active{% endif %}" 
+                        title="{% if is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}">
+                    <i class="fas {% if is_bookmarked %}fa-bookmark{% else %}fa-bookmark{% endif %}"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Next Button -->
+    {% if next_subdot %}
+    <a href="{% url 'subdot_detail' next_subdot.id %}" class="next-button" id="nextButton">
+        Next <i class="fas fa-arrow-right"></i>
+        </a>
+    {% endif %}
+
+    <!-- Previous Button -->
+    {% if previous_subdot %}
+    <a href="{% url 'subdot_detail' previous_subdot.id %}" class="previous-button" id="previousButton">
+        <i class="fas fa-arrow-left"></i> Previous
+        </a>
+    {% endif %}
+
+    <!-- Add this near your content section -->
+    <div class="status-section">
+        {% if progress.completed %}
+        <span class="status-badge completed">
+            <i class="fas fa-check-circle"></i>
+            Completed
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Notes Panel -->
+<div class="notes-panel" id="notesPanel">
+    <div class="notes-header">
+        <h3>My Notes</h3>
+    </div>
+    
+    <form id="noteForm" class="notes-form">
+        {% csrf_token %}
+        <textarea id="noteContent" placeholder="Write your notes here..." required></textarea>
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-save mr-2"></i> Save Note
+        </button>
+    </form>
+
+    <div class="notes-list" id="notesList">
+        {% for note in notes %}
+        <div class="note-item" data-note-id="{{ note.id }}">
+            <div class="note-header">
+                <span>{{ note.subdot.title }}</span>
+                <div class="note-actions">
+                    <button class="note-action-btn edit-note" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="note-action-btn delete-note" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="note-content">{{ note.content }}</div>
+            <div class="note-timestamp">
+                {{ note.updated_at|date:"M d, Y H:i" }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<button class="notes-toggle" id="notesToggle">
+    <i class="fas fa-sticky-note"></i>
+</button>
+
+
+
+<style>
+    :root {
+        --primary-bg: #0B1222;
+        --secondary-bg: #151F32;
+        --text-primary: #E2E8F0;
+        --text-secondary: #A0AEC0;
+        --accent: #4FD1C5;
+        --accent-hover: #38B2AC;
+        --border-color: rgba(74, 85, 104, 0.2);
+        --tracker-width: 240px;
+        --header-height: 60px;
+        --success-color: #48BB78;
+        --warning-color: #ECC94B;
+        --glow-color: rgba(79, 209, 197, 0.15);
+        --navbar-height: 60px;
+    }
+
+    /* Core Layout */
+    body {
+        background: var(--primary-bg);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Background Pattern */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            linear-gradient(to bottom right, 
+                rgba(11, 18, 34, 0.95), 
+                rgba(21, 31, 50, 0.95)),
+            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234FD1C5' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        z-index: -1;
+        opacity: 0.8;
+    }
+
+    /* AI Circuit Lines Animation */
+    .circuit-lines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .circuit-line {
+        position: absolute;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        height: 1px;
+        width: 100%;
+        opacity: 0;
+        animation: circuit-line-animation 8s infinite;
+    }
+
+    @keyframes circuit-line-animation {
+        0% {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        20% {
+            opacity: 0.5;
+        }
+        40% {
+            opacity: 0;
+        }
+        100% {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    /* Progress Tracker */
+    .progress-tracker-wrapper {
+        position: fixed;
+        left: 0;
+        top: var(--navbar-height);
+        bottom: 0;
+        width: var(--tracker-width);
+        background: rgba(21, 31, 50, 0.95);
+        border-right: 1px solid var(--border-color);
+        z-index: 1000;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-tracker {
+        height: 100%;
+        overflow-y: auto;
+        padding: 1.5rem;
+        padding-bottom: 4rem;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) var(--secondary-bg);
+    }
+
+    .progress-tracker::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .progress-tracker::-webkit-scrollbar-track {
+        background: var(--secondary-bg);
+    }
+
+    .progress-tracker::-webkit-scrollbar-thumb {
+        background-color: var(--accent);
+        border-radius: 3px;
+    }
+
+    /* Module Styling */
+    .module {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .module::after {
+        content: '';
+        position: absolute;
+        left: 24px;
+        top: 40px;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--accent) 50%, transparent);
+        opacity: 0.2;
+    }
+
+    .module-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(79, 209, 197, 0.05);
+        border: 1px solid rgba(79, 209, 197, 0.1);
+    }
+
+    .module-header:hover {
+        background: rgba(79, 209, 197, 0.1);
+        transform: translateX(5px);
+    }
+
+    .module-header .icon {
+        color: var(--accent);
+        font-size: 1rem;
+    }
+
+    .module-content {
+        margin-left: 2rem;
+        margin-top: 0.75rem;
+    }
+
+    .submodule {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .submodule:hover {
+        background: rgba(79, 209, 197, 0.1);
+        color: var(--text-primary);
+        transform: translateX(5px);
+    }
+
+    .submodule.active {
+        background: rgba(79, 209, 197, 0.15);
+        color: var(--accent);
+        font-weight: 500;
+        box-shadow: 0 0 20px var(--glow-color);
+    }
+
+    .status-indicator {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 12px;
+        border: 2px solid currentColor;
+        transition: all 0.3s ease;
+    }
+
+    .status-complete {
+        background: rgba(72, 187, 120, 0.2);
+        color: var(--success-color);
+        box-shadow: 0 0 10px rgba(72, 187, 120, 0.3);
+    }
+
+    .status-in-progress {
+        background: rgba(236, 201, 75, 0.2);
+        color: var(--warning-color);
+        box-shadow: 0 0 10px rgba(236, 201, 75, 0.3);
+    }
+
+    /* Main Content Area */
+    .main-content {
+        margin-left: var(--tracker-width);
+        padding: 2rem;
+        padding-top: calc(var(--navbar-height) + 2rem);
+        max-width: 1200px;
+        position: relative;
+        min-height: calc(100vh - var(--navbar-height));
+    }
+
+    /* Content Header */
+    .content-header {
+        background: rgba(21, 31, 50, 0.95);
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(79, 209, 197, 0.1);
+        box-shadow: 0 0 30px rgba(79, 209, 197, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
+    }
+
+    .content-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .container-box {
+        background: rgba(21, 31, 50, 0.95);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .content-description {
+    font-size: 1.1rem;
+    color: #E2E8F0;
+    line-height: 1.8;
+    }
+
+    /* Code Container with Copy Button */
+    .code-container {
+        background: #1E293B;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        color: #FFFFFF;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .code-container pre {
+        margin: 0;
+        padding: 10px;
+        background: transparent;
+    }
+
+    .code-container code {
+        display: block;
+        white-space: pre-wrap;
+        color: #FFFFFF;
+    }
+
+    .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #4FD1C5;
+        color: #0B1222;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .dot-progress {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        display: inline-block;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .dot-progress.completed {
+        background-color: var(--accent);
+        box-shadow: 0 0 10px var(--glow-color);
+    }
+    .copy-button:hover {
+        background: #38B2AC;
+    }
+
+    /* Image Container */
+    .image-container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .image-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .image-container img:hover {
+        transform: scale(1.05);
+    }
+
+    /* Fullscreen Modal for Image */
+    .image-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .image-modal img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 10px;
+    }
+
+    .image-modal .close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 30px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .content-title::before {
+        content: '>';
+        color: var(--accent);
+        font-family: monospace;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+
+    .content-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .meta-tag {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tag-time {
+        background: rgba(79, 209, 197, 0.1);
+        color: var(--accent);
+        border: 1px solid rgba(79, 209, 197, 0.2);
+    }
+
+    .tag-difficulty {
+        background: rgba(236, 201, 75, 0.1);
+        color: var(--warning-color);
+        border: 1px solid rgba(236, 201, 75, 0.2);
+    }
+
+    /* Content Body */
+    .content-body {
+        background: rgba(21, 31, 50, 0.95);
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-top: 2rem;
+        border: 1px solid rgba(79, 209, 197, 0.1);
+        box-shadow: 0 0 30px rgba(79, 209, 197, 0.1);
+        backdrop-filter: blur(10px);
+        line-height: 1.8;
+        font-size: 1.1rem;
+    }
+
+    /* Action Buttons Container */
+    .action-buttons-container {
+        position: fixed;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .action-button-group {
+        background: rgba(13, 25, 48, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        border-radius: 1rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .action-button-group:hover {
+        background: rgba(13, 25, 48, 0.9);
+        border-color: rgba(100, 255, 218, 0.2);
+        transform: translateX(-5px);
+    }
+
+    .action-button {
+        width: 3.5rem;
+        height: 3.5rem;
+        border: none;
+        background: rgba(79, 209, 197, 0.1);
+        color: var(--text-secondary);
+        border-radius: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .action-button::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(45deg, rgba(100, 255, 218, 0.5), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+
+    .action-button:hover {
+        background: rgba(79, 209, 197, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .action-button.active {
+        color: var(--accent-blue);
+        background: rgba(79, 209, 197, 0.15);
+    }
+
+    .action-button.complete {
+        color: #50fa7b;
+        background: rgba(80, 250, 123, 0.15);
+    }
+
+    .action-button i {
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+
+    .action-button:hover i {
+        transform: scale(1.1);
+    }
+
+    /* Next Button */
+    .next-button {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, rgba(79, 209, 197, 0.1), rgba(79, 209, 197, 0.2));
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 0.8rem;
+        color: var(--accent-blue);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .next-button::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(45deg, rgba(100, 255, 218, 0.5), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+
+    .next-button:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, rgba(79, 209, 197, 0.2), rgba(79, 209, 197, 0.3));
+    }
+
+    .next-button i {
+        transition: transform 0.3s ease;
+    }
+
+    .next-button:hover i {
+        transform: translateX(4px);
+    }
+    
+    
+    /* Progress Indicator */
+    .progress-indicator {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: rgba(13, 25, 48, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        border-radius: 0.8rem;
+        padding: 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .progress-indicator i {
+        color: var(--accent-blue);
+    }
+
+    .progress-bar {
+        width: 100px;
+        height: 4px;
+        background: rgba(100, 255, 218, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--accent-blue);
+        transition: width 0.3s ease;
+    }
+
+    /* Time Spent Display */
+    .time-spent {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: rgba(17, 34, 64, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.8rem;
+        border: 1px solid rgba(100, 255, 218, 0.1);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .time-spent i {
+        color: var(--accent-blue);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .status-badge.completed {
+        background: rgba(80, 250, 123, 0.1);
+        color: #50fa7b;
+        border: 1px solid rgba(80, 250, 123, 0.2);
+    }
+
+    .status-badge i {
+        font-size: 0.8rem;
+    }
+
+    /* Toast Notifications - Fixed positioning */
+    .toast-container {
+        position: fixed;
+        top: calc(var(--navbar-height) + 1rem);
+        right: calc(300px + 1rem); /* Adjusted to account for notes panel */
+        z-index: 2000;
+    }
+
+    .toast {
+        background: rgba(21, 31, 50, 0.95);
+        border: 1px solid var(--accent);
+        border-radius: 0.5rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideIn 0.3s ease-out;
+        max-width: 300px;
+    }
+
+    /* Enhanced Notes Panel */
+    .notes-panel {
+        position: fixed;
+        right: 0;
+        top: var(--navbar-height);
+        bottom: 0;
+        width: 300px;
+        background: rgba(21, 31, 50, 0.95);
+        border-left: 1px solid var(--border-color);
+        padding: 1.5rem;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 1500;
+        backdrop-filter: blur(10px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notes-panel.active {
+        transform: translateX(0);
+    }
+
+    .notes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .notes-header h3 {
+        color: var(--accent);
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .notes-form {
+        margin-bottom: 2rem;
+    }
+
+    .notes-form textarea {
+        width: 100%;
+        min-height: 120px;
+        background: rgba(11, 18, 34, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        color: var(--text-primary);
+        font-family: inherit;
+        resize: vertical;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .notes-form textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--glow-color);
+    }
+
+    .notes-list {
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+
+    .note-item {
+        background: rgba(11, 18, 34, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .note-item:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .note-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .note-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .note-action-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+    }
+
+    .note-action-btn:hover {
+        color: var(--accent);
+        transform: scale(1.1);
+    }
+
+    .note-content {
+        color: var(--text-primary);
+        line-height: 1.6;
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+    }
+
+    .note-timestamp {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        text-align: right;
+    }
+
+    .notes-toggle {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 1501;
+        width: 56px;
+        height: 56px;
+        border-radius: 28px;
+        background: var(--accent);
+        color: var(--primary-bg);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .notes-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .notes-toggle i {
+        font-size: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .notes-toggle.active i {
+        transform: rotate(45deg);
+    }
+    .highlighted {
+        background-color: yellow;
+        transition: background-color 0.3s ease;
+    }
+    /* Audio Player Styling */
+    .audio-player-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(21, 31, 50, 0.95);
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .audio-player-container audio {
+        width: 60%;
+        max-width: 600px;
+        margin-right: 20px;
+    }
+
+    .audio-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .audio-controls button {
+        background: rgba(79, 209, 197, 0.1);
+        border: 1px solid var(--accent);
+        color: var(--text-primary);
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .audio-controls button.active,
+    .audio-controls button:hover {
+        background: var(--accent);
+        color: var(--primary-bg);
+    }
+
+    .dot-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .dot-circle.completed {
+        background-color: var(--accent);
+        box-shadow: 0 0 15px var(--glow-color);
+    }
+
+    .dot-circle i {
+        font-size: 12px;
+        color: var(--text-primary);
+    }
+
+    .status-indicator {
+        font-size: 16px;
+        margin-right: 8px;
+        color: var(--accent);
+        transition: all 0.3s ease;
+    }
+
+    .status-complete {
+        color: var(--accent);
+        text-shadow: 0 0 10px var(--glow-color);
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notesPanel = document.getElementById('notesPanel');
+    const notesToggle = document.getElementById('notesToggle');
+    const noteForm = document.getElementById('noteForm');
+    const notesList = document.getElementById('notesList');
+
+    // Toggle notes panel
+    notesToggle.addEventListener('click', function() {
+        notesPanel.classList.toggle('active');
+        notesToggle.classList.toggle('active');
+    });
+
+    // Save note
+    noteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const content = document.getElementById('noteContent').value;
+        const subdotId = '{{ subdot.id }}';
+    
+    fetch('{% url "create_note" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+                content: content,
+                subdot_id: subdotId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+            if (data.success) {
+                // Add new note to the list
+                const noteHtml = createNoteElement(data.note);
+                notesList.insertAdjacentHTML('afterbegin', noteHtml);
+                noteForm.reset();
+                showToast('Note saved successfully!', 'success');
+        }else {
+                showToast(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error saving note. Please try again.', 'error');
+        });
+    });
+
+    // Edit note
+    notesList.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-note')) {
+            const noteItem = e.target.closest('.note-item');
+            const noteId = noteItem.dataset.noteId;
+            const noteContent = noteItem.querySelector('.note-content').textContent;
+            
+            // Switch to edit mode
+            noteItem.querySelector('.note-content').innerHTML = `
+                <textarea class="edit-textarea">${noteContent}</textarea>
+                <button class="btn btn-primary btn-sm mt-2 save-edit">Save Changes</button>
+            `;
+        }
+        else if (e.target.closest('.delete-note')) {
+            const noteId = e.target.closest('.note-item').dataset.noteId;
+            if (confirm('Are you sure you want to delete this note?')) {
+                deleteNote(noteId);
+            }
+        }
+        else if (e.target.closest('.save-edit')) {
+            const noteItem = e.target.closest('.note-item');
+            const noteId = noteItem.dataset.noteId;
+            const content = noteItem.querySelector('.edit-textarea').value;
+            updateNote(noteId, content);
+        }
+    });
+
+    // Handle bookmark toggle
+    const bookmarkForm = document.querySelector('form[action*="toggle_bookmark"]');
+    if (bookmarkForm) {
+        bookmarkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const button = this.querySelector('button');
+            const icon = button.querySelector('i');
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.classList.toggle('active');
+                    icon.classList.toggle('fa-bookmark');
+                    icon.classList.toggle('fa-bookmark-o');
+                    button.title = data.is_bookmarked ? 'Remove Bookmark' : 'Add Bookmark';
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message || 'Error toggling bookmark', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('Error toggling bookmark', 'error');
+                console.error('Error:', error);
+            });
+        });
+    }
+
+    // Record start time when page loads
+    const startTime = new Date();
+    
+    // Function to update time spent
+    function updateTimeSpent() {
+        const currentTime = new Date();
+        const timeSpent = Math.floor((currentTime - startTime) / 1000); // in seconds
+        
+        fetch('{% url "update_progress" subdot.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                time_spent: timeSpent
+            })
+        });
+    }
+    
+    // Update time spent when clicking next button
+    const nextButton = document.getElementById('nextButton');
+    if (nextButton) {
+        nextButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            updateTimeSpent();
+            window.location.href = this.href;
+        });
+    }
+    
+    // Update time spent when leaving the page
+    window.addEventListener('beforeunload', updateTimeSpent);
+
+    // Helper functions
+    function createNoteElement(note) {
+        return `
+            <div class="note-item" data-note-id="${note.id}">
+                <div class="note-header">
+                    <span>${note.subdot_title}</span>
+                    <div class="note-actions">
+                        <button class="note-action-btn edit-note" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="note-action-btn delete-note" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="note-content">${note.content}</div>
+                <div class="note-timestamp">${note.updated_at}</div>
+            </div>
+        `;
+    }
+
+    function updateNote(noteId, content) {
+        fetch(`/api/notes/${noteId}/update/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const noteItem = document.querySelector(`[data-note-id="${noteId}"]`);
+                noteItem.outerHTML = createNoteElement(data.note);
+                showToast('Note updated successfully!', 'success');
+            }
+        })
+        .catch(error => {
+            showToast('Error updating note. Please try again.', 'error');
+        });
+    }
+
+    function deleteNote(noteId) {
+        fetch(`/api/notes/${noteId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector(`[data-note-id="${noteId}"]`).remove();
+                showToast('Note deleted successfully!', 'success');
+            }
+        })
+        .catch(error => {
+            showToast('Error deleting note. Please try again.', 'error');
+        });
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            ${message}
+        `;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+});
+
+    //JavaScript for Audio-Text Synchronization 
+    document.addEventListener("DOMContentLoaded", function() {
+    const audioPlayer = document.getElementById("audioPlayer");
+    const textElements = document.querySelectorAll(".sync-text");
+
+    if (audioPlayer) {
+        audioPlayer.addEventListener("timeupdate", function() {
+            const currentTime = audioPlayer.currentTime;
+            
+            textElements.forEach(element => {
+                const start = parseFloat(element.dataset.start);
+                const end = parseFloat(element.dataset.end);
+                
+                if (currentTime >= start && currentTime <= end) {
+                    element.classList.add("highlighted");
+                } else {
+                    element.classList.remove("highlighted");
+                }
+            });
+        });
+    }
+});
+
+// Playback Speed Controls
+function changePlaybackSpeed(speed) {
+    document.getElementById("audioPlayer").playbackRate = speed;
+    document.querySelectorAll(".audio-controls button").forEach(btn => btn.classList.remove("active"));
+    event.target.classList.add("active");
+}
+function copyCode(button) {
+    const codeBlock = button.nextElementSibling.querySelector("code");
+    navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+        button.innerText = "Copied!";
+        setTimeout(() => { button.innerText = "Copy"; }, 1500);
+    }).catch(err => console.error("Copy failed", err));
+}
+function openModal(src) {
+    document.getElementById("modalImage").src = src;
+    document.getElementById("imageModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("imageModal").style.display = "none";
+}
+function markAsCompleted() {
+    fetch('/mark-completed/{{ subdot.id }}/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            showToast('Topic completed successfully!', 'success');
+            if(data.assessment_url) {
+                window.location.href = data.assessment_url;
+            }
+            updateProgressIndicators();
+        }
+    });
+}
+</script>
+
+{% endblock %}

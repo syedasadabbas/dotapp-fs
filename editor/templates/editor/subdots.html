@@ -1,0 +1,122 @@
+{% extends 'editor/base.html' %}
+
+{% block title %}{{ Dot.name }} - Subdots{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .subdot-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .subdot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .Dot-header {
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        .Dot-description {
+            max-width: 800px;
+            margin: 1rem auto;
+            opacity: 0.9;
+        }
+        .subdot-icon {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        .subdot-icon i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        .completion-badge {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Dot Header -->
+    <div class="Dot-header mb-4">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="display-4">{{ Dot.name }}</h1>
+                <p class="Dot-description lead">
+                    {% if Dot.description %}
+                        {{ Dot.description }}
+                    {% else %}
+                        Explore the subdots in this Dot to master the concepts.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Subdots List -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                {% for subdot in subdots %}
+                    <div class="card subdot-card mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                <div class="subdot-icon">
+                                    <i class="fas fa-dot-circle"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h3 class="h5 mb-2">{{ subdot.title }}</h3>
+                                    <p class="text-muted mb-0">
+                                        {% if subdot.description %}
+                                            {{ subdot.description }}
+                                        {% else %}
+                                            Explore topics and resources in this subdot.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="ms-3 d-flex flex-column align-items-end">
+                                    <span class="completion-badge mb-2">
+                                        <i class="fas fa-chart-line me-1"></i>0% Complete
+                                    </span>
+                                    <a href="{% url 'view_topics' subdot.id %}" class="btn btn-primary">
+                                        <i class="fas fa-arrow-right me-2"></i>View Topics
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-info-circle display-4 mb-3 d-block"></i>
+                            <h2>No Subdots Available</h2>
+                            <p>There are currently no subdots in this Dot.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'view_Dots' Dot.track.id %}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dots
+            </a>
+        </div>
+    </div>
+{% endblock %}

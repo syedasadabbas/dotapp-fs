@@ -1,0 +1,198 @@
+{% extends "learning/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<style>
+    .track-container {
+        position: relative;
+        padding: 20px 0;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .track-title {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 2;
+        color: #fcfafa;
+    }
+    .track-description {
+        text-align: center;
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #fcfafa;
+    }
+    .main-topic {
+        background-color: #ffeb3b;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 300px;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        cursor: pointer;
+        transition: transform 0.2s;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .subtopics-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        position: relative;
+    }
+    .left-subtopics, .right-subtopics {
+        width: 45%;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        position: relative;
+    }
+    .left-subtopics {
+        align-items: flex-end;
+        padding-right: 20px;
+    }
+    .right-subtopics {
+        align-items: flex-start;
+        padding-left: 20px;
+    }
+    .subtopic {
+        background-color: #fff3c4;
+        border-radius: 8px;
+        padding: 15px;
+        width: 250px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+        position: relative;
+        border: 1px solid rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: #333;
+        margin-right: 25px;
+        display: block;
+    }
+    .subtopic:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: #333;
+    }
+    .main-topic:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .connecting-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+    }
+    .connecting-line {
+        position: absolute;
+        border: 2px dotted #007bff;
+        z-index: 1;
+    }
+    .line-left {
+        width: 100px;
+        right: -100px;
+        top: 50%;
+    }
+    .line-right {
+        width: 100px;
+        left: -100px;
+        top: 50%;
+    }
+    .vertical-line {
+        position: absolute;
+        left: 50%;
+        top: 60px;
+        bottom: 20px;
+        width: 2px;
+        background-color: #007bff;
+        transform: translateX(-50%);
+    }
+    .progress-info {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 10px;
+    }
+    .progress-bar {
+        height: 6px;
+        margin-top: 8px;
+        border-radius: 3px;
+        background-color: rgba(0, 123, 255, 0.2);
+    }
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        background-color: #007bff;
+        transition: width 0.3s ease;
+    }
+    .completed {
+        background-color: #e8f5e9;
+        border-color: #4caf50;
+    }
+    .completed .progress-bar-fill {
+        background-color: #4caf50;
+    }
+</style>
+
+<div class="container">
+    {% if tracks %}
+        {% for track in tracks %}
+        <div class="track-container">
+            <div class="vertical-line"></div>
+            <h3 class="track-title">{{ track.title }}</h3>
+            
+            <div class="main-topic">
+                {{ track.title }}
+            </div>
+
+            <div class="subtopics-container">
+                <div class="left-subtopics">
+                    {% for dot in track.dots.all|dictsort:"order"|slice:"0:4" %}
+                    {% with progress=dot_progress|get_item:dot.id %}
+                    <a href="{% url 'dot_detail' track.id dot.id %}" class="subtopic {% if progress == 100 %}completed{% endif %}">
+                        {{ dot.title }}
+                        <div class="progress-info">
+                            Progress: {{ progress }}%
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: {{ progress }}%"></div>
+                            </div>
+                        </div>
+                        <div class="connecting-line line-left"></div>
+                    </a>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+                
+                <div class="right-subtopics">
+                    {% for dot in track.dots.all|dictsort:"order"|slice:"4:" %}
+                    {% with progress=dot_progress|get_item:dot.id %}
+                    <a href="{% url 'dot_detail' track.id dot.id %}" class="subtopic {% if progress == 100 %}completed{% endif %}">
+                        {{ dot.title }}
+                        <div class="progress-info">
+                            Progress: {{ progress }}%
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width: {{ progress }}%"></div>
+                            </div>
+                        </div>
+                        <div class="connecting-line line-right"></div>
+                    </a>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            No tracks available at the moment. Please check back later.
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

@@ -1,0 +1,107 @@
+{% extends "learning/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>{{ track.title }}</h2>
+            <p class="text-muted">{{ track.description }}</p>
+            
+            <!-- Total Time Spent -->
+            <div class="mb-4">
+                <h5>Total Time Spent: {{ total_time_spent|format_timedelta }}</h5>
+            </div>
+
+            <!-- Dots List -->
+            <div class="list-group">
+                {% for dot in dots %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div class="w-100">
+                            <h5 class="mb-1">
+                                <a href="{% url 'dot_detail' track.id dot.id %}" class="text-decoration-none">
+                                    {{ dot.title }}
+                                </a>
+                            </h5>
+                            <p class="mb-1">{{ dot.description }}</p>
+                            
+                            <!-- Progress Information -->
+                            {% with progress=dot_progress|get_item:dot.id %}
+                            {% if progress %}
+                            <div class="text-muted small">
+                                <span>Completed: {{ progress.completed }}/{{ progress.total }} subdots</span>
+                                <span class="ms-3">Time spent: {{ progress.time_spent|format_timedelta }}</span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="progress mt-2" style="height: 10px;">
+                                <div class="progress-bar {% if progress.percentage == 100 %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ progress.percentage }}%;" 
+                                     aria-valuenow="{{ progress.percentage }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        
+                        <!-- Completion Badge -->
+                        {% with progress=dot_progress|get_item:dot.id %}
+                        {% if progress and progress.percentage == 100 %}
+                        <div class="ms-3">
+                            <span class="badge bg-success rounded-pill">
+                                <i class="fas fa-check"></i>
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Track Statistics -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Track Progress</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Overall Progress</span>
+                            <span class="text-muted">{{ track_stats.completed_dots }}/{{ track_stats.total_dots }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if track_stats.completion_percentage == 100 %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ track_stats.completion_percentage }}%;" 
+                                 aria-valuenow="{{ track_stats.completion_percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Total Dots</span>
+                            <span class="badge bg-primary rounded-pill">{{ track_stats.total_dots }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Completed Dots</span>
+                            <span class="badge bg-success rounded-pill">{{ track_stats.completed_dots }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Total Time Spent</span>
+                            <span class="badge bg-info rounded-pill">{{ total_time_spent|format_timedelta }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

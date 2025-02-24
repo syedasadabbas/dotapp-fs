@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Content</title>
+    <script src="https://cdn.tiny.cloud/1/ssut2f8a05vvduw6y28mzeurxq1wc9l0po6o21hpofirco7h/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        tinymce.init({
+            selector: '.tinymce',
+            plugins: 'code',
+            toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright | code',
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.24.0/min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.24.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monaco.editor.create(document.getElementById('code'), {
+                value: '',
+                language: 'javascript',
+                theme: 'vs-dark'
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Upload Content</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.title.label }} {{ form.title }}<br>
+        {{ form.content.label }} <textarea class="tinymce">{{ form.content }}</textarea><br>
+        {{ form.code.label }} <div id="code" style="width:800px;height:600px;border:1px solid #ccc;"></div><br>
+        {{ form.image.label }} {{ form.image }}<br>
+        {{ form.audio.label }} {{ form.audio }}<br>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>
