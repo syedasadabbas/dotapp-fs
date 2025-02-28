@@ -1,6 +1,15 @@
 {% extends 'learning/base.html' %}
 
 {% block content %}
+{% if not has_access %}
+<div class="subscription-overlay">
+    <div class="subscription-message">
+        <h2>Unlock Full Access</h2>
+        <p>You've reached the free preview limit for this course. Subscribe to continue learning!</p>
+        <a href="{% url 'subscription_view' %}" class="subscribe-btn">View Plans</a>
+    </div>
+</div>
+{% endif %}
 
 <!-- Background Circuit Lines -->
 <div class="circuit-lines">
@@ -57,25 +66,68 @@
             {% if topics %}
                 {% for topic in topics %}
                 <div class="container-box">
-                    <h3 class="content-title">{{ topic.title }}</h3>
-                    <p class="content-description">{{ topic.content|safe }}</p>
-                </div>
-                    <!-- Show Code if Available -->
-                    {% if topic.code %}
-                    <div class="container-box">
-                        <div class="code-container">
-                            <button class="copy-button" onclick="copyCode(this)">Copy</button>
-                            <pre><code>{{ topic.code }}</code></pre>
+                    <div class="container-header">
+                        <h3 class="content-title">{{ topic.title }}</h3>
+                        <div class="action-controls">
+                            <button class="plus-button" onclick="toggleActionButtons(this)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="action-buttons-container" style="display: none;">
+                                <div class="action-button-group">
+                                    <form action="{% url 'mark_completed' subdot.id %}" method="post" class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-button {% if progress.completed %}complete{% endif %}" 
+                                                title="{% if progress.completed %}Completed{% else %}Mark as Complete{% endif %}">
+                                            <i class="fas {% if progress.completed %}fa-check-circle{% else %}fa-check{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <a href="{% url 'ask_instructor' subdot.id %}" class="action-button" title="Ask AI Assistant">
+                                        <i class="fas fa-robot"></i>
+                                    </a>
+
+                                    <a href="#" class="action-button" title="Ask Teacher">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </a>
+
+                                    <form action="{% url 'toggle_bookmark' subdot.id %}" method="post" class="action-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-button {% if is_bookmarked %}active{% endif %}" 
+                                                title="{% if is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}">
+                                            <i class="fas {% if is_bookmarked %}fa-bookmark{% else %}fa-bookmark{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    <p class="content-description">{{ topic.content|safe }}</p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="topic-action-buttons" style="display: none;">
+                        <div class="action-button-group">
+                            <form action="{% url 'mark_completed' subdot.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="action-button {% if progress.completed %}complete{% endif %}" 
+                                        title="{% if progress.completed %}Completed{% else %}Mark as Complete{% endif %}">
+                                    <i class="fas {% if progress.completed %}fa-check-circle{% else %}fa-check{% endif %}"></i>
+                                </button>
+                            </form>
+                            
+                            <a href="{% url 'ask_instructor' subdot.id %}" class="action-button" title="Ask AI Assistant">
+                                <i class="fas fa-robot"></i>
+                            </a>
 
-                    {% endif %}
-
-                    {% if topic.image %}
-                    <div class="container-box image-container">
-                        <img src="{{ topic.image.url }}" alt="Topic Image" onclick="openModal(this.src)">
+                            <form action="{% url 'toggle_bookmark' subdot.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="action-button {% if is_bookmarked %}active{% endif %}" 
+                                        title="{% if is_bookmarked %}Remove Bookmark{% else %}Add Bookmark{% endif %}">
+                                    <i class="fas {% if is_bookmarked %}fa-bookmark{% else %}fa-bookmark{% endif %}"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    {% endif %}
+                </div>
                 {% endfor %}
                 <!-- Fullscreen Modal for Image -->
                 <div id="imageModal" class="image-modal" onclick="closeModal()">
@@ -125,7 +177,7 @@
     {% endif %}
 
     <!-- Action Buttons -->
-    <div class="action-buttons-container">
+    {% comment %} <div class="action-buttons-container">
         <div class="action-button-group">
             <form action="{% url 'mark_completed' subdot.id %}" method="post">
                 {% csrf_token %}
@@ -137,7 +189,7 @@
             
             <a href="{% url 'ask_instructor' subdot.id %}" class="action-button" title="Ask AI Assistant">
                 <i class="fas fa-robot"></i>
-            </a>
+            </a> {% endcomment %}
 
             <form action="{% url 'toggle_bookmark' subdot.id %}" method="post">
                 {% csrf_token %}
@@ -424,13 +476,13 @@
     .status-complete {
         background: rgba(72, 187, 120, 0.2);
         color: var(--success-color);
-        box-shadow: 0 0 10px rgba(72, 187, 120, 0.3);
+        box-shadow: 0 0 10px var(--glow-color);
     }
 
     .status-in-progress {
         background: rgba(236, 201, 75, 0.2);
         color: var(--warning-color);
-        box-shadow: 0 0 10px rgba(236, 201, 75, 0.3);
+        box-shadow: 0 0 10px var(--glow-color);
     }
 
     /* Main Content Area */
@@ -1023,6 +1075,88 @@
         background-color: yellow;
         transition: background-color 0.3s ease;
     }
+    /* Plus Button and Action Buttons Styles */
+    .container-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .action-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .plus-button {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        z-index: 1001;
+    }
+
+    .plus-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: rotate(90deg);
+    }
+
+    .plus-button.active {
+        transform: rotate(45deg);
+    }
+
+    .action-buttons-container {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(17, 34, 64, 0.9);
+        border-radius: 0.5rem;
+        animation: slideIn 0.3s ease;
+    }
+
+    .action-button-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .action-form {
+        margin: 0;
+    }
+
+    .action-button {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
     /* Audio Player Styling */
     .audio-player-container {
         position: fixed;
@@ -1096,6 +1230,66 @@
     .status-complete {
         color: var(--accent);
         text-shadow: 0 0 10px var(--glow-color);
+    }
+
+    /* Subscription Overlay */
+    .subscription-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(11, 18, 34, 0.95);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .subscription-message {
+        background: var(--secondary-bg);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 500px;
+        margin: 20px;
+    }
+
+    .subscription-message h2 {
+        color: var(--text-primary);
+        margin-bottom: 20px;
+    }
+
+    .subscription-message p {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+    }
+
+    .subscribe-btn {
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    .subscribe-btn:hover {
+        transform: scale(1.05);
+        text-decoration: none;
+        color: white;
+    }
+
+    .locked-subdot {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .lock-icon {
+        margin-left: 10px;
+        color: var(--text-secondary);
     }
 </style>
 <script>
@@ -1376,6 +1570,28 @@ function markAsCompleted() {
             updateProgressIndicators();
         }
     });
+}
+function toggleActionButtons(button) {
+    const actionContainer = button.parentElement.querySelector('.action-buttons-container');
+    
+    // If clicking the same button that's already active
+    if (button.classList.contains('active')) {
+        button.classList.remove('active');
+        actionContainer.style.display = 'none';
+        return;
+    }
+
+    // Reset all other buttons and containers
+    document.querySelectorAll('.plus-button.active').forEach(btn => {
+        if (btn !== button) {
+            btn.classList.remove('active');
+            btn.parentElement.querySelector('.action-buttons-container').style.display = 'none';
+        }
+    });
+
+    // Activate current button and show its container
+    button.classList.add('active');
+    actionContainer.style.display = 'inline-flex';
 }
 </script>
 

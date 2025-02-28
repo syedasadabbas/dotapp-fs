@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+
+from learning.views.subscription_views import CancelView, SuccessView
 from . import views
 
 urlpatterns = [
@@ -25,4 +27,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('editor/', include('editor.urls')),
     path('learning/', include('learning.urls')),
+    path("success/", SuccessView.as_view(), name="success"),
+    path("cancel/", CancelView.as_view(), name="cancel"),
+    path("verify-otp/", views.verify_otp, name="verify_otp"),
+    path("google-login-callback/", views.google_login_callback, name="google_login_callback"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

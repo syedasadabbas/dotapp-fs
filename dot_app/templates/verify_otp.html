@@ -1,0 +1,15 @@
+{% extends "learning/base.html" %}
+{% block content %}
+<h2>Verify OTP</h2>
+<p>We have sent a 6-digit OTP to your email. Please enter it below:</p>
+
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="text" name="otp" placeholder="Enter OTP" required>
+    <button type="submit">Verify</button>
+</form>
+{% endblock %}

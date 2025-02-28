@@ -33,6 +33,16 @@ def editor_dashboard(request):
 
 # View Dots
 
+def editor_login(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect("editor_dashboard")  # Redirect after login
+    return render(request, "editor/login.html")  # Render login template
+
 def view_Dots(request, track_id):
     track = Track.objects.get(id=track_id)
     

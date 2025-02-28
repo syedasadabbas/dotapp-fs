@@ -1,0 +1,11 @@
+{% extends "learning/base.html" %} 
+{% block title %} Success {% endblock title%} 
+{% block content %}
+<div class="alert alert-success" role="alert">
+  Thanks for subscribing to Standard Plan
+  <a
+      href="{% url 'editor_dashboard' %}"
+      >Go to Home Page</a
+    >
+</div>
+{% endblock content %}

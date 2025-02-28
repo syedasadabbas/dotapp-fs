@@ -1,8 +1,7 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+from editor.models import Track, Dot, SubDot
 from learning.models import Progress, DotProgress, Bookmark
-from editor.models import SubDot
 from .utils import calculate_dot_progress
 from learning.forms import InstructorQuestionForm
 from django.views.decorators.http import require_http_methods
@@ -10,12 +9,36 @@ from django.views.decorators.http import require_http_methods
 @login_required
 def subdot_detail(request, subdot_id):
     subdot = get_object_or_404(SubDot, id=subdot_id)
+    dot = subdot.dot
+    track = dot.track
     learner = request.user.learnerprofile
+    
+    # Get the tracks we want to check
+    frontend_track = Track.objects.filter(title__icontains='Frontend Developer').first()
+    ai_track = Track.objects.filter(title__icontains='AI Engineer').first()
+    ai_intro_dot = ai_track.dots.filter(title__icontains='Introduction').first() if ai_track else None
 
+    print(f"Current track: {track.title}, Current dot: {dot.title}")
+    print(f"Frontend track found: {frontend_track.title if frontend_track else None}")
+    print(f"AI track found: {ai_track.title if ai_track else None}")
+    print(f"AI intro dot found: {ai_intro_dot.title if ai_intro_dot else None}")
+    
+    # Determine if user has access
+    has_access = False
+    
+    if hasattr(request.user, 'subscription'):
+        has_access = True
+    elif frontend_track and track.id == frontend_track.id and dot.title.lower() == 'internet':
+        has_access = True
+    elif ai_track and track.id == ai_track.id and dot.id == ai_intro_dot.id:
+        has_access = True
+    
+    print(f"Has access: {has_access}")
+    
     progress, created = Progress.objects.get_or_create(learner=learner, subdot=subdot)
 
     next_subdot = SubDot.objects.filter(dot=subdot.dot, id__gt=subdot.id).order_by('id').first()
-    previous_subdot = SubDot.objects.filter(dot=subdot.dot, id__lt=subdot.id).order_by('-id').first()
+    prev_subdot = SubDot.objects.filter(dot=subdot.dot, id__lt=subdot.id).order_by('-id').first()
 
     dot_progress = calculate_dot_progress(learner, subdot.dot)
     if dot_progress == 100:
@@ -25,30 +48,35 @@ def subdot_detail(request, subdot_id):
 
     notes = subdot.note_set.filter(learner=learner).order_by('-updated_at')
     is_bookmarked = Bookmark.objects.filter(learner=learner, subdot=subdot).exists()
-    track = subdot.dot.track
-    topics = subdot.topics.all()
-
-    topic_audio = []
+    
+    # Get all topics for this subdot
+    topics = subdot.topics.all()  # Removed order_by('order') since there's no order field
+    
+    # Initialize variables for audio and timestamps
+    topic_audio = None
     topic_timestamps = None
-    if topics.exists():
-        for topic in topics:
-            if topic.audio:
-                topic_audio = topic.audio.url
-                topic_timestamps = topic.timestamps
-                break
+    
+    # Find the first topic with audio and timestamps
+    for topic in topics:
+        if topic.audio:
+            topic_audio = topic.audio.url
+            topic_timestamps = topic.timestamps
+            break
 
     context = {
         'subdot': subdot,
         'track': track,
-        'progress': progress,
-        'is_bookmarked': is_bookmarked,
+        'dot': dot,
         'next_subdot': next_subdot,
-        'previous_subdot': previous_subdot,
+        'prev_subdot': prev_subdot,
+        'progress': progress,
         'dot_progress': dot_progress,
         'notes': notes,
+        'is_bookmarked': is_bookmarked,
         'topics': topics,
         'topic_audio': topic_audio,
-        'topic_timestamps': topic_timestamps
+        'topic_timestamps': topic_timestamps,
+        'has_access': has_access
     }
     return render(request, 'learning/subdot_detail.html', context)
 

@@ -1,0 +1,228 @@
+{% extends 'learning/base.html' %}
+
+{% block content %}
+<style>
+    .pricing-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .pricing-toggle {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .toggle-button {
+        background: var(--secondary-bg);
+        border: none;
+        padding: 10px 20px;
+        margin: 0 10px;
+        border-radius: 20px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-button.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .pricing-cards {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    .pricing-card {
+        background: var(--secondary-bg);
+        border-radius: 20px;
+        padding: 30px;
+        width: 300px;
+        text-align: center;
+        transition: transform 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .pricing-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary-color);
+    }
+
+    .plan-name {
+        font-size: 24px;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+    }
+
+    .plan-price {
+        font-size: 48px;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+    }
+
+    .plan-price small {
+        font-size: 16px;
+        color: var(--text-secondary);
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 30px 0;
+    }
+
+    .plan-features li {
+        color: var(--text-secondary);
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .plan-features li i {
+        color: var(--primary-color);
+        margin-right: 10px;
+    }
+
+    .subscribe-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .subscribe-btn:hover {
+        transform: scale(1.05);
+        text-decoration: none;
+        color: white;
+    }
+
+    .save-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        position: absolute;
+        top: -10px;
+        right: -10px;
+    }
+</style>
+
+<div class="pricing-container">
+    <div class="pricing-toggle">
+        <button class="toggle-button active" onclick="toggleBilling('monthly')">Monthly</button>
+        <button class="toggle-button" onclick="toggleBilling('yearly')">Yearly</button>
+    </div>
+
+    <div class="pricing-cards">
+        {% for plan in plans %}
+        <div class="pricing-card">
+            <div class="plan-name">{{ plan.name }}</div>
+            <div class="plan-price monthly">
+                PKR {{ plan.price }}<small>/month</small>
+            </div>
+            <div class="plan-price yearly" style="display: none;">
+                PKR {{ plan.price }}<small>/year</small>
+            </div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Access to all course content</li>
+                <li><i class="fas fa-check"></i> Basic AI assistance</li>
+                <li><i class="fas fa-check"></i> Community support</li>
+            </ul>
+            {% comment %} <a href="{% url 'payment_view' %}?plan_id={{ plan.id }}" class="subscribe-btn">subscribe Now</a> {% endcomment %}
+            <form action="{% url 'learning:create-checkout-session' plan.id %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                <input type="hidden" name="price" value="{{ plan.price }}">
+                <input type="hidden" name="plan_name" value="{{ plan.name }}">
+                <button type="submit" class="subscribe-btn">Subscribe Now</button>
+            </form>     
+        </div>
+        {% endfor %}
+
+        <div class="pricing-card">
+            {% for plan in plans %}
+            <div class="save-badge">Save 20%</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price monthly">
+                PKR {{ plan.price }}<small>/month</small>
+            </div>
+            <div class="plan-price yearly" style="display: none;">
+                PKR {{ plan.price }}<small>/year</small>
+            </div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Everything in Basic</li>
+                <li><i class="fas fa-check"></i> Priority AI assistance</li>
+                <li><i class="fas fa-check"></i> Downloadable resources</li>
+                <li><i class="fas fa-check"></i> Certificate of completion</li>
+            </ul>
+            {% comment %} <a href="{% url 'payment_view'%}?plan_id={{ plan.id }}" class="subscribe-btn">Get Pro</a> {% endcomment %}
+            <form action="{% url 'learning:create-checkout-session' plan.id %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                <input type="hidden" name="price" value="{{ plan.price }}">
+                <input type="hidden" name="plan_name" value="{{ plan.name }}">
+                <button type="submit" class="subscribe-btn">Get Pro</button>
+            </form>       
+        </div>
+        {% endfor %}
+        <div class="pricing-card">
+            {% for plan in plans %}
+            <div class="save-badge">Save 25%</div>
+            <div class="plan-name">{{ plan.name }}</div>
+            <div class="plan-price monthly">
+                PKR {{ plan.price }}<small>/month</small>
+            </div>
+            <div class="plan-price yearly" style="display: none;">
+                PKR {{ plan.price }}<small>/year</small>
+            </div>
+            <ul class="plan-features">
+                <li><i class="fas fa-check"></i> Everything in Pro</li>
+                <li><i class="fas fa-check"></i> 1-on-1 mentoring</li>
+                <li><i class="fas fa-check"></i> Team collaboration</li>
+                <li><i class="fas fa-check"></i> Custom learning paths</li>
+                <li><i class="fas fa-check"></i> API access</li>
+            </ul>
+            {% comment %} <a href="{% url 'payment_view' %}" class="subscribe-btn">Contact Sales</a> {% endcomment %}
+            <form action="{% url 'learning:create-checkout-session' plan.id %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                <input type="hidden" name="price" value="{{ plan.price }}">
+                <input type="hidden" name="plan_name" value="{{ plan.name }}">
+                <button type="submit" class="subscribe-btn">Subscribe Now</button>
+            </form>            
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function toggleBilling(type) {
+    const buttons = document.querySelectorAll('.toggle-button');
+    const monthlyPrices = document.querySelectorAll('.plan-price.monthly');
+    const yearlyPrices = document.querySelectorAll('.plan-price.yearly');
+
+    buttons.forEach(button => {
+        button.classList.remove('active');
+        if (button.textContent.toLowerCase().includes(type)) {
+            button.classList.add('active');
+        }
+    });
+
+    if (type === 'monthly') {
+        monthlyPrices.forEach(price => price.style.display = 'block');
+        yearlyPrices.forEach(price => price.style.display = 'none');
+    } else {
+        monthlyPrices.forEach(price => price.style.display = 'none');
+        yearlyPrices.forEach(price => price.style.display = 'block');
+    }
+}
+</script>
+{% endblock %}

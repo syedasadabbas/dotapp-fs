@@ -1,5 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+
+from dot_app import views
 from .views.auth_views import register, logout_view
 from .views.profile_views import profile
 from .views.dashboard_views import dashboard
@@ -9,10 +11,12 @@ from .views.subdot_views import subdot_detail, toggle_bookmark, ask_instructor
 from .views.note_views import add_note, create_note, update_note, delete_note, get_note, get_all_notes
 from .views.progress_views import mark_completed, progress_view, update_progress
 from .views.assessment_views import generate_assessment, assessment_result
+from .views.subscription_views import CancelView, CreateStripeCheckoutSessionView, SuccessView, subscription_view, payment_view
 
+app_name="learning"
 
 urlpatterns = [
-    path('', dashboard, name='dashboard'),
+    path('dashboard/', dashboard, name='dashboard'),
     path('register/', register, name='register'),
     path('login/', auth_views.LoginView.as_view(template_name='learning/login.html'), name='login'),
     path('logout/', logout_view, name='logout'),
@@ -35,4 +39,14 @@ urlpatterns = [
     path('api/notes/', get_all_notes, name='get_all_notes'),
     path('generate-assessment/<int:subdot_id>/', generate_assessment, name='generate_assessment'),
     path('assessment-result/<int:result_id>/', assessment_result, name='assessment_result'),
+
+    path('subscription/', subscription_view, name='subscription_view'),
+    path('payment/', payment_view, name='payment_view'),
+    path(
+        "create-checkout-session/<int:pk>/",
+        CreateStripeCheckoutSessionView.as_view(),
+        name="create-checkout-session",
+    ),
+    # path("success/", SuccessView.as_view(), name="success"),
+    # path("cancel/", CancelView.as_view(), name="cancel"),
 ]

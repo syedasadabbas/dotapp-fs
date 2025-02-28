@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Track, Dot, SubDot, Topic
+from .models import OTP, Track, Dot, SubDot, Topic
 from .forms import TrackForm, DotForm, SubDotForm, TopicForm
 
 # Register your models here.
@@ -20,3 +20,5 @@ admin.site.register(Track, TrackAdmin)
 admin.site.register(Dot, DotAdmin)
 admin.site.register(SubDot, SubDotAdmin)
 admin.site.register(Topic, TopicAdmin)
+
+admin.site.register(OTP)

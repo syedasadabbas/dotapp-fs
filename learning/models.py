@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -151,3 +152,56 @@ class DotProgress(models.Model):
         if self.completed and not self.completed_at:
             self.completed_at = timezone.now()
         self.save()
+
+class SubscriptionPlan(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField()
+    duration_days = models.IntegerField(default=30)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} - ${self.price}"
+
+class UserSubscription(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    payment_status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ], default='pending')
+
+    def save(self, *args, **kwargs):
+        """ Automatically set end_date based on plan duration """
+        if self.plan and not self.end_date:
+            self.end_date = timezone.now() + timedelta(days=self.plan.duration_days)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username}'s subscription - {self.plan.name if self.plan else 'Free Trial'}"
+
+    def is_valid(self):
+        """ Check if the subscription is still active """
+        return self.is_active and self.end_date > timezone.now()
+
+class FreeTrialUsage(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    dot = models.ForeignKey(Dot, on_delete=models.CASCADE)
+    subdots_accessed = models.ManyToManyField(SubDot)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'dot')
+
+    def has_free_trial_access(self):
+        return self.subdots_accessed.count() < 4
+
+    def __str__(self):
+        return f"{self.user.username}'s trial usage for {self.dot.title}"
