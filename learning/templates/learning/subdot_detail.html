@@ -1,16 +1,9 @@
 {% extends 'learning/base.html' %}
 
 {% block content %}
-{% if not has_access %}
-<div class="subscription-overlay">
-    <div class="subscription-message">
-        <h2>Unlock Full Access</h2>
-        <p>You've reached the free preview limit for this course. Subscribe to continue learning!</p>
-        <a href="{% url 'subscription_view' %}" class="subscribe-btn">View Plans</a>
-    </div>
-</div>
-{% endif %}
 
+{% if request.user.usersubscription.has_access %}
+    
 <!-- Background Circuit Lines -->
 <div class="circuit-lines">
     <div class="circuit-line"></div>
@@ -134,6 +127,40 @@
                     <span class="close">&times;</span>
                     <img id="modalImage" src="">
                 </div>
+                {% if is_last_subdot and all_completed %}
+                <a href="{% url 'start_assessment' dot.id %}" class="assessment-button" id="assessmentButton" data-dot-id="{{ dot.id }}">
+                    <i class="fas fa-file-alt"></i> Start Assessment
+                </a>
+                {% elif next_subdot %}
+                    <a href="{% url 'subdot_detail' next_subdot.id %}" class="next-button" id="nextButton">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+                <!-- Assessment Popup -->
+            <div id="assessmentPopup" class="assessment-popup" style="display:none;">
+                <div class="assessment-content">
+                    <h2>Assessment</h2>
+                    <form id="assessmentForm">
+                        {% csrf_token %}
+                        <div class="questions-container" id="questionsContainer">
+                            <!-- Questions will be dynamically added here -->
+                        </div>
+                        <div class="assessment-actions">
+                            <button type="submit" class="submit-btn">Submit Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Result Popup -->
+            <div id="resultPopup" class="result-popup" style="display:none;">
+                <div class="result-content">
+                    <h2>Assessment Completed</h2>
+                    <p id="resultMessage"></p>
+                    <button class="close-btn" onclick="window.location.reload();">Close</button>
+                </div>
+            </div>
+
             {% else %}
                 <p>No content available.</p>
             {% endif %}
@@ -266,6 +293,16 @@
 <button class="notes-toggle" id="notesToggle">
     <i class="fas fa-sticky-note"></i>
 </button>
+
+    {% else %}
+    <div class="subscription-overlay">
+        <div class="subscription-message">
+            <h2>Unlock Full Access</h2>
+            <p>You've reached the free preview limit for this course. Subscribe to continue learning!</p>
+            <a href="{% url 'subscription_view' %}" class="subscribe-btn">View Plans</a>
+        </div>
+    </div>
+{% endif %}
 
 
 
@@ -1291,6 +1328,50 @@
         margin-left: 10px;
         color: var(--text-secondary);
     }
+    .assessment-button {
+        background: #4FD1C5;
+        color: #0B1222;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .assessment-button:hover {
+        background: #38B2AC;
+    }
+    .assessment-popup, .result-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    }
+
+    .assessment-popup h2 {
+        color: #333;
+        text-align: center;
+    }
+
+    .assessment-popup .submit-btn {
+        display: block;
+        width: 100%;
+        background: #4FD1C5;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        transition: background 0.3s;
+    }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1593,6 +1674,67 @@ function toggleActionButtons(button) {
     button.classList.add('active');
     actionContainer.style.display = 'inline-flex';
 }
+document.addEventListener('DOMContentLoaded', function() {
+    const startAssessmentButton = document.getElementById('assessmentButton');
+    const assessmentPopup = document.getElementById('assessmentPopup');
+    const questionsContainer = document.getElementById('questionsContainer');
+    const assessmentForm = document.getElementById('assessmentForm');
+    const resultPopup = document.getElementById('resultPopup');
+    const resultMessage = document.getElementById('resultMessage');
+
+    if (startAssessmentButton) {
+        // Show the Assessment Popup
+        startAssessmentButton.addEventListener('click', function() {
+            // Get the dot ID from the data attribute we'll add to the button
+            const dotId = startAssessmentButton.dataset.dotId;
+            
+            fetch(`/learning/dot/${dotId}/generate-assessment/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.success) {
+                    questionsContainer.innerHTML = '';
+                    data.questions.forEach(question => {
+                        questionsContainer.innerHTML += `
+                            <div class="question-card">
+                                <h3>${question.question_text}</h3>
+                                <div class="options-container">
+                                    <label class="option-label">
+                                        <input type="radio" name="question_${question.id}" value="A" required> ${question.option_a}
+                                    </label>
+                                    <label class="option-label">
+                                        <input type="radio" name="question_${question.id}" value="B" required> ${question.option_b}
+                                    </label>
+                                    <label class="option-label">
+                                        <input type="radio" name="question_${question.id}" value="C" required> ${question.option_c}
+                                    </label>
+                                    <label class="option-label">
+                                        <input type="radio" name="question_${question.id}" value="D" required> ${question.option_d}
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    assessmentPopup.style.display = 'block';
+                    startAssessmentButton.style.display = 'none';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    alert("Failed to load questions. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error loading assessment. Please try again.");
+            });
+        });
+    }
+});
+
 </script>
 
 {% endblock %}

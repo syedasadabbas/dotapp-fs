@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -85,7 +85,7 @@ def payment_view(request):
                 )
             
             messages.success(request, f"Successfully subscribed to {plan.name} plan!")
-            return redirect('dashboard/')
+            return redirect('dashboard')
             
         except SubscriptionPlan.DoesNotExist:
             messages.error(request, "Invalid subscription plan selected.")
@@ -102,6 +102,35 @@ def payment_view(request):
         'plan': plan
     }
     return render(request, 'learning/payment.html', context)
+
+def access_subdot(request, subdot_id):
+    subdot = get_object_or_404(SubDot, id=subdot_id)
+    user = request.user
+
+    # Check if the user has an active subscription
+    try:
+        if user.usersubscription.has_access():
+            # Allow full access to all SubDots and Topics
+            return render(request, 'subdot_detail.html', {'subdot': subdot})
+    except UserSubscription.DoesNotExist:
+        pass
+    # If the user is not subscribed, check for free trial
+    trial_usage, created = FreeTrialUsage.objects.get_or_create(user=user)
+
+        # Check if the user has already accessed this SubDot
+    if subdot in trial_usage.subdots_accessed.all():
+            return render(request, 'subdot_detail.html', {'subdot': subdot})
+
+        # Check if the user has reached the 4 SubDots limit
+    if not trial_usage.has_free_trial_access():
+            messages.error(request, "You have reached the maximum limit of 4 free SubDots. Please subscribe to continue learning.")
+            return redirect('subscription_view')
+
+        # If access is allowed, add this SubDot to the accessed list
+    trial_usage.subdots_accessed.add(subdot)
+    trial_usage.save()
+
+    return render(request, 'subdot_detail.html', {'subdot': subdot})
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY

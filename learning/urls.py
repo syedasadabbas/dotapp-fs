@@ -10,7 +10,7 @@ from .views.dot_views import dot_detail
 from .views.subdot_views import subdot_detail, toggle_bookmark, ask_instructor
 from .views.note_views import add_note, create_note, update_note, delete_note, get_note, get_all_notes
 from .views.progress_views import mark_completed, progress_view, update_progress
-from .views.assessment_views import generate_assessment, assessment_result
+from .views.assessment_views import start_assessment, assessment_result
 from .views.subscription_views import CancelView, CreateStripeCheckoutSessionView, SuccessView, subscription_view, payment_view
 
 app_name="learning"
@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/notes/<int:note_id>/delete/', delete_note, name='delete_note'),
     path('api/notes/<int:note_id>/get/', get_note, name='get_note'),
     path('api/notes/', get_all_notes, name='get_all_notes'),
-    path('generate-assessment/<int:subdot_id>/', generate_assessment, name='generate_assessment'),
+    path('dot/<int:dot_id>/start-assessment/', start_assessment, name='start_assessment'),
     path('assessment-result/<int:result_id>/', assessment_result, name='assessment_result'),
 
     path('subscription/', subscription_view, name='subscription_view'),

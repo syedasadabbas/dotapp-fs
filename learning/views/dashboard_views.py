@@ -37,7 +37,7 @@ def dashboard(request):
         completed=True
     ).select_related('subdot__dot').order_by('-completed_at')[:5]
     bookmarked_subdots = SubDot.objects.filter(bookmark__learner=learner)
-    user_results = AssessmentResult.objects.filter(learner=learner).order_by('-completed_at')
+    user_results = AssessmentResult.objects.filter(learner=learner.user.learnerprofile).order_by('-completed_at')
 
     context = {
         'tracks': tracks,

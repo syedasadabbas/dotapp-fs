@@ -44,6 +44,7 @@ class Track(models.Model):
 
 class Dot(models.Model):
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="dots")
+    description = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=200)
     order = models.IntegerField(default=1)
     created_by = models.ForeignKey(Editor, on_delete=models.CASCADE, null=True, blank=True, related_name='created_dots')
@@ -64,7 +65,7 @@ class Dot(models.Model):
 class SubDot(models.Model):
     dot = models.ForeignKey(Dot, on_delete=models.CASCADE, related_name="subdots")
     title = models.CharField(max_length=200)
-    content = models.TextField(default="No content available")
+    content = models.TextField()
     code_snippet = models.TextField(blank=True)
     image_url = models.URLField(blank=True)
     order = models.IntegerField(default=1)
