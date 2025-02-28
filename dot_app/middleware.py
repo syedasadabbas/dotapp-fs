@@ -8,8 +8,10 @@ from editor.models import OTP
 class OTPMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if request.user.is_authenticated:
-            if request.path in [reverse("verify_otp"), reverse("google_login_callback")]:
-                return  # Allow these paths without checking OTP
+            # ✅ Allow access to `verify_otp` and `google_login_callback` without further OTP checks
+            allowed_paths = [reverse("verify_otp"), reverse("google_login_callback")]
+            if request.path in allowed_paths:
+                return None  # Ensure OTP check is skipped
 
             otp_instance = OTP.objects.filter(user=request.user).first()
 

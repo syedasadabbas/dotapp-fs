@@ -642,8 +642,8 @@
                 <h3>Learner</h3>
                 <p>Start your learning journey with personalized courses and expert guidance. Access curated content and interactive lessons.</p>
                 <div class="role-buttons">
-                    <a href="/dashboard/" class="role-btn role-login">Log In</a>
-                    <a href="register/" class="role-btn role-signup">Sign Up</a>
+                    <a href="{% url 'learning:dashboard' %}" class="role-btn role-login">Log In</a>
+                    <a href="{% url 'learning:register' %}" class="role-btn role-signup">Sign Up</a>
                 </div>
             </div>
             <div class="role-card">

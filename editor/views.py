@@ -1,6 +1,8 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate, get_user_model, logout
 from django.contrib import messages
+from django.utils.timezone import now
+from dot_app.views import generate_otp, send_otp_email, start_otp_verification
 from .models import Track, Dot, SubDot, Topic, SubscriptionPlan, PaymentMethod, Subscription, Earnings
 from django import forms
 from django.core.files.storage import FileSystemStorage
@@ -109,23 +111,39 @@ def view_topic(request, topic_id):
     return render(request, 'editor/topic_detail.html', context)
 
 # Subscription View
-
 def subscribe_editor(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
         User = get_user_model()
 
-        # Check if the username already exists
         if User.objects.filter(username=username).exists():
-            messages.error(request, 'You are already registered. Please log in.')
-            return render(request, 'editor/subscribe.html', {'error_message': 'You are already registered. Please log in.'})
+            messages.error(request, "You are already registered. Please log in.")
+            return render(request, "editor/subscribe.html")
 
-        User.objects.create_user(username=username, email=email, password=password)
-        messages.success(request, 'Registration successful! You can now subscribe. ')
-        return redirect('subscription_view')
-    return render(request, 'editor/subscribe.html')
+        if request.user.is_staff or request.user.is_superuser:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            login(request, user)
+            messages.success(request, "Registration successful! You are now logged in.")
+            return redirect("subscription_view")
+
+        request.session["pending_user_data"] = {
+            "username": username,
+            "email": email,
+            "password": password,
+        }
+
+        new_otp = generate_otp()
+        request.session["pending_otp"] = new_otp
+        request.session["otp_expires_at"] = (now() + timedelta(minutes=10)).isoformat()
+
+        send_otp_email(email, new_otp)
+
+        messages.success(request, "An OTP has been sent to your email. Please verify to complete registration.")
+        return redirect("verify_otp")
+
+    return render(request, "editor/subscribe.html")
 
 # Login View
 

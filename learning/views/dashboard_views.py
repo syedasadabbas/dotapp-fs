@@ -4,7 +4,7 @@ from django.contrib import messages
 from learning.models import LearnerProfile, Progress, Note, Bookmark, AssessmentResult
 from editor.models import Track, SubDot
 
-@login_required
+@login_required(login_url='/learning/login/')
 def dashboard(request):
     learner, created = LearnerProfile.objects.get_or_create(user=request.user)
     tracks = Track.objects.all()

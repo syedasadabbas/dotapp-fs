@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
 import random
+from django.contrib import messages
+from django.utils.timezone import now
 from django.shortcuts import redirect, render
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -41,13 +44,13 @@ def generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def send_otp_email(user, otp):
+def send_otp_email(email, otp):
     """Send OTP to user's email."""
     send_mail(
         "Your OTP Code",
         f"Your OTP code is {otp}. It will expire in 5 minutes.",
         "noreply@yourdomain.com",
-        [user.email],
+        [email],
         fail_silently=False,
     )
 
@@ -79,42 +82,54 @@ def start_otp_verification(user, request):
     request.session["pending_otp_user"] = user.id
     return False  # OTP needs to be verified
 
-
-
 def verify_otp(request):
-    """
-    Verify OTP input by the user.
-    If valid, mark OTP as confirmed and log in the user.
-    """
-    user_id = request.session.get("pending_otp_user")
-    
-    if not user_id:
-        return redirect("login")  # Redirect if no user is in session
+    user_data = request.session.get("pending_user_data")
+    stored_otp = request.session.get("pending_otp")
+    otp_expires_at = request.session.get("otp_expires_at")
 
-    user = User.objects.filter(id=user_id).first()
-    if not user:
-        return redirect("login")
-
-    # ✅ Bypass OTP for staff or admin users
-    if user.is_staff or user.is_superuser:
-        login(request, user)
-        del request.session["pending_otp_user"]  # Clean up session
-        return redirect("learning:dashboard")
+    if not user_data or not stored_otp:
+        messages.error(request, "Session expired. Please register again.")
+        return redirect("learning:register")
 
     if request.method == "POST":
+        if "resend_otp" in request.POST:
+            new_otp = generate_otp()
+            request.session["pending_otp"] = new_otp
+            request.session["otp_expires_at"] = (now() + timedelta(minutes=10)).isoformat()
+
+            send_otp_email(user_data["email"], new_otp)  # Send new OTP
+            messages.success(request, "A new OTP has been sent to your email.")
+            return redirect("verify_otp")
+
         otp_input = request.POST.get("otp")
-        otp_instance = OTP.objects.filter(user=user).first()
 
-        if otp_instance and otp_instance.otp == otp_input:
-            otp_instance.otp_confirmed = True  # ✅ Mark 2FA as completed
-            otp_instance.save()
+        # ✅ Convert `otp_expires_at` to datetime before comparison
+        otp_expiry_time = datetime.fromisoformat(otp_expires_at)
 
-            # Log in the user since OTP is confirmed
-            login(request, user)
-            del request.session["pending_otp_user"]  # Clean up session
-            
-            return redirect("learning:dashboard")  # Redirect to dashboard
+        # ✅ Check OTP validity
+        if otp_input != stored_otp:
+            messages.error(request, "Invalid OTP. Please try again.")
+            return render(request, "verify_otp.html")
 
-        return render(request, "verify_otp.html", {"error": "Invalid OTP or expired."})
+        if now() > otp_expiry_time:
+            messages.error(request, "OTP expired. Please request a new one.")
+            return redirect("verify_otp")
+
+        # ✅ Create and save the user now (only after OTP verification)
+        user = User.objects.create_user(
+            username=user_data["username"],
+            email=user_data["email"],
+            password=user_data["password"],
+        )
+
+        # ✅ Clear session data after successful verification
+        del request.session["pending_user_data"]
+        del request.session["pending_otp"]
+        del request.session["otp_expires_at"]
+
+        # ✅ Log in user
+        login(request, user)
+        messages.success(request, "Your account has been created successfully!")
+        return redirect("learning:dashboard")
 
     return render(request, "verify_otp.html")

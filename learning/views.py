@@ -704,7 +704,7 @@ def logout_view(request):
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
-from .models import Note
+from .models import DotProgress, Note
 from django.utils import timezone
 
 @require_http_methods(["POST"])

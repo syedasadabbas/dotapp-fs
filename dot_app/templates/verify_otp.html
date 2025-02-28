@@ -12,4 +12,11 @@
     <input type="text" name="otp" placeholder="Enter OTP" required>
     <button type="submit">Verify</button>
 </form>
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="resend_otp" value="true">
+    <button type="submit">Resend OTP</button>
+</form>
+
 {% endblock %}
