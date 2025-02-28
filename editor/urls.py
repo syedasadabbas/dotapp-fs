@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import editor_dashboard, editor_login, view_Dots, view_subdots, view_topics, view_topic, subscribe_editor, add_topic, content_addition, add_subdot, login_view, subscription_view, payment_view, earnings_view, register, logout_view
+from .views import *
 
 urlpatterns = [
     path('', editor_dashboard, name='editor_dashboard'),
+    path('subscribe_dot/<int:dot_id>/', toggle_subscription, name='toggle_subscription'),
     path('login/', editor_login, name='editor_login'),
     path('Dots/<int:track_id>/', view_Dots, name='view_Dots'),
     path('subdots/<int:Dot_id>/', view_subdots, name='view_subdots'),
