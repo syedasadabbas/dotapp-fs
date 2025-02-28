@@ -78,23 +78,38 @@ class Bookmark(models.Model):
         unique_together = ('learner', 'subdot')
     
 class Assessment(models.Model):
-    learner = models.ForeignKey(User, on_delete=models.CASCADE)
     subdot = models.ForeignKey(SubDot, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(default=timezone.now)
+    learner = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['subdot', 'learner']
 
     def __str__(self):
         return f"{self.learner.username} - {self.subdot.title}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure completed_at is set when completed is True
+        if self.completed and not self.completed_at:
+            self.completed_at = timezone.now()
+        super().save(*args, **kwargs)
 
 class AssessmentQuestion(models.Model):
     assessment = models.ForeignKey(Assessment, related_name="questions", on_delete=models.CASCADE)
     question_text = models.TextField()
-    selected_answer = models.CharField(max_length=255)
-    correct_answer = models.CharField(max_length=255)
-    is_correct = models.BooleanField()
+    option_a = models.CharField(max_length=200, default='N/A')
+    option_b = models.CharField(max_length=200, default='N/A')
+    option_c = models.CharField(max_length=200, default='N/A')
+    option_d = models.CharField(max_length=200, default='N/A')
+    selected_answer = models.CharField(max_length=1, blank=True, null=True)
+    correct_answer = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
+    is_correct = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Q: {self.question_text} - {self.is_correct}"
-
+    
 class AssessmentResult(models.Model):
     learner = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE)
     assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE)
@@ -104,7 +119,7 @@ class AssessmentResult(models.Model):
     completed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.learner.username} - {self.subdot.title}: {self.score}/{self.total_marks}"
+        return f"{self.learner.user.username} - {self.subdot.title}: {self.score}/{self.total_marks}"
     
 class InstructorQuestion(models.Model):
     learner = models.ForeignKey(LearnerProfile, on_delete=models.CASCADE)
@@ -187,8 +202,11 @@ class UserSubscription(models.Model):
         return f"{self.user.username}'s subscription - {self.plan.name if self.plan else 'Free Trial'}"
 
     def is_valid(self):
-        """ Check if the subscription is still active """
-        return self.is_active and self.end_date > timezone.now()
+        return self.is_active and self.end_date > timezone.now() and self.payment_status == 'completed'
+    
+    def has_access(self):
+        # If the user has an active subscription, grant full access
+        return self.is_valid()
 
 class FreeTrialUsage(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

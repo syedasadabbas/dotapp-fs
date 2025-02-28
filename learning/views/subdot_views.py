@@ -3,8 +3,10 @@ from django.contrib.auth.decorators import login_required
 from editor.models import Track, Dot, SubDot
 from learning.models import Progress, DotProgress, Bookmark
 from .utils import calculate_dot_progress
+from django.http import JsonResponse
 from learning.forms import InstructorQuestionForm
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
 
 @login_required
 def subdot_detail(request, subdot_id):
@@ -39,6 +41,13 @@ def subdot_detail(request, subdot_id):
 
     next_subdot = SubDot.objects.filter(dot=subdot.dot, id__gt=subdot.id).order_by('id').first()
     prev_subdot = SubDot.objects.filter(dot=subdot.dot, id__lt=subdot.id).order_by('-id').first()
+
+    is_last_subdot = not next_subdot
+
+    all_completed = all(
+    Progress.objects.filter(learner=learner, subdot=s, completed=True).exists()
+    for s in dot.subdots.all()
+    )
 
     dot_progress = calculate_dot_progress(learner, subdot.dot)
     if dot_progress == 100:
@@ -76,7 +85,9 @@ def subdot_detail(request, subdot_id):
         'topics': topics,
         'topic_audio': topic_audio,
         'topic_timestamps': topic_timestamps,
-        'has_access': has_access
+        'has_access': has_access,
+        'is_last_subdot': is_last_subdot,
+        'all_completed': all_completed,
     }
     return render(request, 'learning/subdot_detail.html', context)
 
