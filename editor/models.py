@@ -4,7 +4,7 @@ from django.utils.timezone import now
 
 class Editor(AbstractUser):
     # Use string reference to avoid circular import
-    subscribed_dots = models.ManyToManyField('editor.Dot', blank=True)
+    subscribed_dots = models.ManyToManyField('Dot', blank=True, related_name='subscribed_editors')
     is_approved = models.BooleanField(default=False)
     
     groups = models.ManyToManyField(
@@ -22,6 +22,9 @@ class Editor(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions'
     )
+
+    def __str__(self):
+        return self.username
 
 class Track(models.Model):
     title = models.CharField(max_length=200)
@@ -72,6 +75,7 @@ class SubDot(models.Model):
     created_by = models.ForeignKey(Editor, on_delete=models.CASCADE, null=True, blank=True, related_name='created_subdots')
 
     def is_completed(self, learner):
+        from learning.models import Progress
         try:
             progress = Progress.objects.get(learner=learner, subdot=self)
             return progress.completed

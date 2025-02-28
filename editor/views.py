@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, authenticate, get_user_model, logout
 from django.contrib import messages
 from .models import Track, Dot, SubDot, Topic, SubscriptionPlan, PaymentMethod, Subscription, Earnings
@@ -11,6 +11,26 @@ import json
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+
+
+@login_required
+def toggle_subscription(request, dot_id):
+    # Get the Dot by ID or return 404 if not found
+    dot = get_object_or_404(Dot, id=dot_id)
+    editor = request.user  # Get the logged-in Editor
+
+    # Check if the Editor is already subscribed
+    if dot in editor.subscribed_dots.all():
+        # If subscribed, remove subscription
+        editor.subscribed_dots.remove(dot)
+        messages.success(request, f"You have unsubscribed from {dot.title}.")
+    else:
+        # If not subscribed, add subscription
+        editor.subscribed_dots.add(dot)
+        messages.success(request, f"You have subscribed to {dot.title}.")
+
+    # Redirect back to the Dots page
+    return redirect('view_Dots', track_id=dot.track.id)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -116,17 +136,49 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('content_addition')
+            return redirect('editor_dashboard')  # Redirect to Dashboard instead of content addition
         else:
             messages.error(request, 'Invalid username or password.')
     return render(request, 'editor/login.html')
 
-# New view for content addition
-
+@login_required
 def content_addition(request):
-    if not request.user.is_authenticated:
-        messages.error(request, "You're not registered. Please sign up to add content.")
-        return redirect('signup')
+    if request.method == 'POST':
+        # Capture Form Data
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        code = request.POST.get('code')
+        dot_id = request.POST.get('dot')
+        subdot_id = request.POST.get('subdot')
+
+        # Get Dot and SubDot
+        dot = Dot.objects.get(id=dot_id) if dot_id else None
+        subdot = SubDot.objects.get(id=subdot_id) if subdot_id else None
+        
+        # Handle Image and Audio Uploads
+        image = request.FILES.get('image')
+        audio = request.FILES.get('audio')
+
+        # Create New Topic
+        new_topic = Topic(
+            title=title,
+            content=content,
+            code=code,
+            subdot=subdot,
+            created_by=request.user
+        )
+
+        # Add Image and Audio if uploaded
+        if image:
+            new_topic.image = image
+        if audio:
+            new_topic.audio = audio
+
+        new_topic.save()
+        messages.success(request, 'Content added successfully!')
+        return redirect('content_addition')
+    
+    # GET Request: Display Form
     dots = Dot.objects.all()
     subdots = SubDot.objects.all()
     return render(request, 'editor/content_addition.html', {'Dots': dots, 'subdots': subdots})
