@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Options</title>
+    <style>
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+            width: 30%;
+            display: inline-block;
+        }
+        .card h2 {
+            margin-bottom: 10px;
+        }
+        .subscribe-btn {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Choose Your Subscription Plan</h1>
+    <div class="card">
+        <h2>Basic Plan</h2>
+        <p>Features: Basic features description.</p>
+        <p>Price: PKR 500</p>
+        <button class="subscribe-btn" onclick="location.href='{% url 'payment_view' %}?plan=1'">Subscribe</button>
+    </div>
+    <div class="card">
+        <h2>Gold Plan</h2>
+        <p>Features: Gold features description.</p>
+        <p>Price: PKR 1000</p>
+        <button class="subscribe-btn" onclick="location.href='{% url 'payment_view' %}?plan=2'">Subscribe</button>
+    </div>
+    <div class="card">
+        <h2>Premium Plan</h2>
+        <p>Features: Premium features description.</p>
+        <p>Price: PKR 2000</p>
+        <button class="subscribe-btn" onclick="location.href='{% url 'payment_view' %}?plan=3'">Subscribe</button>
+    </div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{% extends "learning/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Complete Your {{ plan|title }} Subscription</h3>
+                </div>
+                <div class="card-body">
+                    <div class="subscription-summary mb-4">
+                        <h4>Plan Summary</h4>
+                        <div class="plan-details">
+                            <p><strong>Selected Plan:</strong> {{ plan|title }}</p>
+                            <p><strong>Price:</strong> 
+                                {% if plan == 'basic' %}
+                                PKR {{ plan.price }}
+                                {% elif plan == 'pro' %}
+                                PKR {{ plan.price }}
+                                {% else %}
+                                PKR {{ plan.price }}
+                                {% endif %}
+                            </p>
+                            <p><strong>Features:</strong></p>
+                            <ul>
+                                {% if plan == 'basic' %}
+                                    <li>Access to all course content</li>
+                                    <li>Basic AI assistance</li>
+                                    <li>Community support</li>
+                                {% elif plan == 'pro' %}
+                                    <li>Everything in Basic, plus:</li>
+                                    <li>Advanced AI features</li>
+                                    <li>Priority support</li>
+                                    <li>Downloadable resources</li>
+                                {% else %}
+                                    <li>Everything in Pro, plus:</li>
+                                    <li>1-on-1 mentoring</li>
+                                    <li>Custom learning path</li>
+                                    <li>Certificate of completion</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'complete_subscription' plan %}" class="payment-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="card-number" class="form-label">Card Number</label>
+                            <input type="text" class="form-control" id="card-number" placeholder="1234 5678 9012 3456" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="expiry" class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiry" placeholder="MM/YY" required>
+                            </div>
+                            <div class="col">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" placeholder="123" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name on Card</label>
+                            <input type="text" class="form-control" id="name" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the terms and conditions
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Complete Subscription</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.plan-details {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.payment-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: none;
+}
+</style>
+{% endblock %}

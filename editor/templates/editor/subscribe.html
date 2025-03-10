@@ -1,0 +1,87 @@
+{% extends 'editor/base.html' %}
+
+{% block title %}Subscribe - DotApp{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="page-title text-center">Subscribe to DotApp</h1>
+            
+            <div class="card">
+                <div class="card-body p-4">
+                    {% if error_message %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error_message }}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Subscribe Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <p class="text-muted">Already have an account? <a href="{% url 'login_view' %}" class="text-primary">Sign in</a></p>  #it will redirect to sigin page after subscription
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .input-group-text {
+            background-color: var(--light-color);
+            border: 1px solid #ced4da;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %}

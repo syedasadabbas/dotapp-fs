@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Result</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0A192F;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: rgba(17, 34, 64, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .score {
+            font-size: 36px;
+            font-weight: bold;
+            color: #64ffda;
+        }
+
+        .btn {
+            padding: 12px;
+            background: linear-gradient(45deg, #64ffda, #805ad5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            box-shadow: 0 4px 16px rgba(100, 255, 218, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Assessment Completed!</h1>
+        <p><strong>{{ result.learner.username }}</strong>, your score is:</p>
+        <div class="score">{{ result.score }}/10</div>
+        <a href="{% url 'dashboard' %}" class="btn">📊 Go to Dashboard</a>
+    </div>
+</body>
+</html>

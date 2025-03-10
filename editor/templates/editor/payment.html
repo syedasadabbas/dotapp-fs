@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Options</title>
+    <script>
+        function showPaymentDetails() {
+            var paymentMethod = document.getElementById('payment_method').value;
+            document.getElementById('bankDetails').style.display = paymentMethod === 'Bank Account' ? 'block' : 'none';
+            document.getElementById('jazzcashDetails').style.display = paymentMethod === 'JazzCash' ? 'block' : 'none';
+            document.getElementById('easypaisaDetails').style.display = paymentMethod === 'Easypaisa' ? 'block' : 'none';
+            document.getElementById('debitCardDetails').style.display = paymentMethod === 'Debit Card' ? 'block' : 'none';
+            document.getElementById('paypalDetails').style.display = paymentMethod === 'PayPal' ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <h1>Payment Options</h1>
+    <form method="POST" action="{% url 'payment_view' %}">
+        {% csrf_token %}   
+        <input type="hidden" name="plan_id" value="{{ plan_id }}">
+        <label for="payment_method">Select Payment Method:</label>
+        <select name="payment_method" id="payment_method" onchange="showPaymentDetails()">
+            <option value="Bank Account">Bank Account</option>
+            <option value="PayPal">PayPal</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="JazzCash">JazzCash</option>
+            <option value="Easypaisa">Easypaisa</option>
+        </select>
+
+        <div id="bankDetails" style="display:none;">
+            <label for="bank">Select Bank:</label>
+            <select name="bank" id="bank">
+                <option value="bank1" selected>Bank 1</option>
+                <option value="bank2">Bank 2</option>
+                <option value="bank3">Bank 3</option>
+            </select>
+            <label for="account_no">Account Number:</label>
+            <input type="text" name="account_no" id="account_no" value="123456789" required>
+        </div>
+
+        <div id="jazzcashDetails" style="display:none;">
+            <label for="jazzcash_account_no">JazzCash Account Number:</label>
+            <input type="text" name="jazzcash_account_no" id="jazzcash_account_no" value="987654321" required>
+        </div>
+
+        <div id="easypaisaDetails" style="display:none;">
+            <label for="easypaisa_account_no">Easypaisa Account Number:</label>
+            <input type="text" name="easypaisa_account_no" id="easypaisa_account_no" value="456789123" required>
+        </div>
+
+        <div id="debitCardDetails" style="display:none;">
+            <label for="card_number">Card Number:</label>
+            <input type="text" name="card_number" id="card_number" value="4111111111111111" required>
+            <label for="expiry_date">Expiry Date:</label>
+            <input type="text" name="expiry_date" id="expiry_date" value="12/25" required>
+            <label for="cvv">CVV:</label>
+            <input type="text" name="cvv" id="cvv" value="123" required>
+            <label for="cardholder_name">Cardholder Name:</label>
+            <input type="text" name="cardholder_name" id="cardholder_name" value="John Doe" required>
+        </div>
+
+        <div id="paypalDetails" style="display:none;">
+            <label for="paypal_email">PayPal Email:</label>
+            <input type="email" name="paypal_email" id="paypal_email" value="john.doe@example.com" required>
+        </div>
+        <a href="{% url 'content_addition' %}" class="subscribe-btn">Process Payment</a>
+    </form>
+</body>
+</html>

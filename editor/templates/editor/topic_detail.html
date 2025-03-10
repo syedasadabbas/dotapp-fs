@@ -1,0 +1,507 @@
+{% extends 'editor/base.html' %}
+
+{% block title %}{{ topic.title }} - DotApp{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+    <style>
+        .topic-header {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        .topic-content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .topic-section {
+            margin-bottom: 2rem;
+        }
+        .topic-section:last-child {
+            margin-bottom: 0;
+        }
+        .section-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .section-title i {
+            margin-right: 0.5rem;
+        }
+        .media-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .topic-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .topic-image:hover {
+            transform: scale(1.02);
+        }
+        .download-btn {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .download-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        .audio-section {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .audio-controls {
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .audio-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .audio-progress:hover .progress-bar::after {
+            opacity: 1;
+        }
+        
+        .audio-buttons {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .play-pause-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .play-pause-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+        
+        .time-display {
+            font-size: 1rem;
+            color: white;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        /* Enhanced highlight styles */
+        .content-highlight {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(10px);
+            transition: all 0.5s ease;
+        }
+        
+        .content-section {
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            transition: all 0.5s ease;
+            border: 1px solid #eee;
+        }
+        
+        .content-section.content-highlight {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        pre {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+        #imageModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            cursor: pointer;
+        }
+        #modalImage {
+            max-width: 90%;
+            max-height: 90vh;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Image Modal -->
+    <div id="imageModal" onclick="closeModal()">
+        <img id="modalImage" src="" alt="Full size image">
+    </div>
+
+    <!-- Topic Header -->
+    <div class="topic-header mb-4">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="display-4">{{ topic.title }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center bg-transparent mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'view_Dots' track_id=topic.subdot.dot.track.id %}" class="text-white">
+                                {{ topic.subdot.dot.track.title }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'view_subdots' Dot_id=topic.subdot.dot.id %}" class="text-white">
+                                {{ topic.subdot.dot.title }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'view_topics' topic.subdot.id %}" class="text-white">
+                                {{ topic.subdot.title }}
+                            </a>
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="topic-content">
+                    {% if topic.content %}
+                        <div class="topic-section content-section" data-content-id="text-content" data-content-type="text">
+                            {{ topic.content|safe }}
+                        </div>
+                    {% endif %}
+
+                    {% if topic.code %}
+                        <div class="topic-section content-section" data-content-id="code-content" data-content-type="code">
+                            <pre><code class="language-javascript">{{ topic.code }}</code></pre>
+                        </div>
+                    {% endif %}
+
+                    {% if topic.image %}
+                        <div class="topic-section content-section" data-content-id="image-content" data-content-type="image">
+                            <img src="{{ topic.image.url }}" alt="Topic image" class="topic-image" onclick="openModal(this.src)">
+                        </div>
+                    {% endif %}
+
+                    {% if topic.audio %}
+                        <div class="audio-section">
+                            <h3 class="mb-4"><i class="fas fa-headphones me-2"></i>Audio Explanation</h3>
+                            <div class="audio-controls">
+                                <div class="audio-progress" id="audio-progress">
+                                    <div class="progress-bar" id="progress-bar"></div>
+                                </div>
+                                <div class="audio-buttons">
+                                    <button class="play-pause-btn" id="play-pause-btn">
+                                        <i class="fas fa-play" id="play-icon"></i>
+                                    </button>
+                                </div>
+                                <div class="time-display">
+                                    <span id="current-time">00:00</span> / <span id="duration">00:00</span>
+                                </div>
+                                <audio id="topic-audio" src="{{ topic.audio.url }}" preload="metadata"></audio>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between mb-4">
+                    <a href="{% url 'view_topics' topic.subdot.id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Topics
+                    </a>
+                    {% if not topic.completed %}
+                        <button onclick="markAsComplete()" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Mark as Complete
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-javascript.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const audio = document.getElementById('topic-audio');
+            if (!audio) return;
+
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playIcon = document.getElementById('play-icon');
+            const progressBar = document.getElementById('progress-bar');
+            const audioProgress = document.getElementById('audio-progress');
+            const currentTimeDisplay = document.getElementById('current-time');
+            const durationDisplay = document.getElementById('duration');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            // Get timestamps from the server
+            const timestamps = {{ topic.timestamps|safe }};
+            
+            // Track if audio is playing
+            let isPlaying = false;
+            
+            // Initialize IntersectionObserver for auto-scrolling
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        // Only auto-scroll if audio is playing
+                        if (isPlaying && !entry.isIntersecting && entry.target.classList.contains('content-highlight')) {
+                            entry.target.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center',
+                                inline: 'center'
+                            });
+                        }
+                    });
+                },
+                { 
+                    threshold: 0.5,
+                    rootMargin: '-20% 0px -20% 0px'
+                }
+            );
+
+            // Observe all content sections
+            contentSections.forEach(section => observer.observe(section));
+
+            // Play/Pause functionality with smooth animation
+            playPauseBtn.addEventListener('click', togglePlay);
+            
+            function togglePlay() {
+                if (audio.paused) {
+                    audio.play();
+                    isPlaying = true;
+                    playIcon.classList.replace('fa-play', 'fa-pause');
+                    playPauseBtn.style.transform = 'scale(0.9)';
+                } else {
+                    audio.pause();
+                    isPlaying = false;
+                    playIcon.classList.replace('fa-pause', 'fa-play');
+                    playPauseBtn.style.transform = 'scale(1)';
+                }
+                setTimeout(() => {
+                    playPauseBtn.style.transform = 'scale(1)';
+                }, 200);
+            }
+
+            // Update progress bar with smooth animation
+            audio.addEventListener('timeupdate', () => {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+                currentTimeDisplay.textContent = formatTime(audio.currentTime);
+                
+                // Only update content highlight and scroll if audio is playing
+                if (isPlaying) {
+                    updateContentHighlight(audio.currentTime);
+                }
+            });
+
+            // Handle audio play/pause events
+            audio.addEventListener('play', () => {
+                isPlaying = true;
+            });
+
+            audio.addEventListener('pause', () => {
+                isPlaying = false;
+            });
+
+            audio.addEventListener('ended', () => {
+                isPlaying = false;
+                playIcon.classList.replace('fa-pause', 'fa-play');
+            });
+
+            // Set duration display when metadata is loaded
+            audio.addEventListener('loadedmetadata', () => {
+                durationDisplay.textContent = formatTime(audio.duration);
+            });
+
+            // Click on progress bar to seek with visual feedback
+            audioProgress.addEventListener('click', (e) => {
+                const rect = audioProgress.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                audio.currentTime = pos * audio.duration;
+                
+                // Add click animation
+                const ripple = document.createElement('div');
+                ripple.classList.add('ripple');
+                ripple.style.left = `${e.clientX - rect.left}px`;
+                audioProgress.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 1000);
+            });
+
+            // Format time in seconds to MM:SS
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = Math.floor(seconds % 60);
+                return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+
+            // Update content highlight with smooth transitions
+            function updateContentHighlight(currentTime) {
+                let activeTimestamp = timestamps.find(ts => 
+                    currentTime >= ts.start && currentTime <= ts.end
+                );
+
+                // Remove highlight from all sections with transition
+                contentSections.forEach(section => {
+                    if (!section.classList.contains('content-highlight')) {
+                        section.style.transform = 'translateX(0)';
+                    }
+                    section.classList.remove('content-highlight');
+                });
+
+                // Add highlight to active section with transition
+                if (activeTimestamp) {
+                    const activeSection = document.querySelector(
+                        `[data-content-id="${activeTimestamp.contentId}"]`
+                    );
+                    if (activeSection) {
+                        activeSection.classList.add('content-highlight');
+                        // Only auto-scroll if audio is playing
+                        if (isPlaying && !isElementInViewport(activeSection)) {
+                            activeSection.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                                inline: 'center'
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Check if element is in viewport
+            function isElementInViewport(el) {
+                const rect = el.getBoundingClientRect();
+                return (
+                    rect.top >= 0 &&
+                    rect.left >= 0 &&
+                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                );
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && e.target === document.body) {
+                    e.preventDefault();
+                    togglePlay();
+                }
+            });
+        });
+
+        function markAsComplete() {
+            fetch(`/editor/mark_topic_complete/${topic.id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                }
+            });
+        }
+
+        // Image modal functionality
+        function openModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            modalImg.src = imageSrc;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
+{% endblock %}

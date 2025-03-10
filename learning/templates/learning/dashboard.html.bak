@@ -1,0 +1,158 @@
+{% extends "learning/base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Welcome, {{ user.get_full_name|default:user.username }}!</h2>
+    
+    <div class="row mt-4">
+        <!-- Progress Overview -->
+        <div class="col-md-8">
+            <div class="row">
+                <!-- Completed Dots -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Completed Dots</h5>
+                            <h2 class="display-4 mb-4">{{ total_completed }}</h2>
+                            <div class="list-group">
+                                {% for dot in completed_dots|slice:":5" %}
+                                <a href="{% url 'dot_detail' dot.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ dot.title }}</h6>
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle"></i>
+                                        </small>
+                                    </div>
+                                    <small class="text-muted">{{ dot.track.title }}</small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% if completed_dots.count > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'completed_dots' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bookmarks -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Bookmarks</h5>
+                            <h2 class="display-4 mb-4">{{ total_bookmarks }}</h2>
+                            <div class="list-group">
+                                {% for subdot in bookmarked_subdots|slice:":5" %}
+                                <a href="{% url 'subdot_detail' subdot.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ subdot.title }}</h6>
+                                        <small class="text-warning">
+                                            <i class="fas fa-bookmark"></i>
+                                        </small>
+                                    </div>
+                                    <small class="text-muted">{{ subdot.dot.title }}</small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% if bookmarked_subdots.count > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'bookmarks' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track Progress -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Dots Progress</h5>
+                    {% for track_data in track_progress.values %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <a href="{% url 'track_detail' track_data.track.id %}" class="text-decoration-none">
+                                <h6 class="mb-0">{{ track_data.track.title }}</h6>
+                            </a>
+                            <small>{{ track_data.completed }}/{{ track_data.total }} dots</small>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if track_data.percentage == 100 %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ track_data.percentage }}%;" 
+                                 aria-valuenow="{{ track_data.percentage }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Activity</h5>
+                    <div class="timeline">
+                        {% for progress in recent_progress %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker {% if progress.completed %}bg-success{% endif %}"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'subdot_detail' progress.subdot.id %}">{{ progress.subdot.title }}</a>
+                                </h6>
+                                <small class="text-muted">{{ progress.completed_at|timesince }} ago</small>
+                                <p class="mb-0">
+                                    <small>{{ progress.subdot.dot.title }}</small>
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+}
+
+.timeline-marker.bg-success {
+    background-color: #28a745;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background-color: #dee2e6;
+}
+</style>
+{% endblock %}

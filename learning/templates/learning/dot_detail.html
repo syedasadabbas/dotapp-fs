@@ -1,0 +1,78 @@
+{% extends "learning/base.html" %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'track_list' %}">Tracks</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'track_detail' dot.track.id %}">{{ dot.track.title }}</a></li>
+            <li class="breadcrumb-item active">{{ dot.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">{{ dot.title }}</h2>
+            <p class="text-muted mb-0">Part {{ dot.order }} of {{ dot.track.title }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            {% if subdots %}
+                <div class="list-group mb-4">
+                    {% for subdot in subdots %}
+                    <a href="{% url 'subdot_detail' subdot.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ subdot.title }}</h5>
+                                <small class="text-muted">SubDot {{ subdot.order }}</small>
+                            </div>
+                            <div>
+                                {% if subdot.progress.completed %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Completed
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No content available for this dot yet. Please check back later.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Progress</h5>
+                    <div class="progress mb-3">
+                        {% with completed_count=subdots|length %}
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {% if completed_count %}{{ completed_count|floatformat:0 }}{% else %}0{% endif %}%" 
+                             aria-valuenow="{% if completed_count %}{{ completed_count|floatformat:0 }}{% else %}0{% endif %}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {% if completed_count %}{{ completed_count|floatformat:0 }}{% else %}0{% endif %}%
+                        </div>
+                        {% endwith %}
+                    </div>
+                    <p class="card-text">
+                        {% with total=subdots|length %}
+                            {{ total }} total subdots
+                        {% endwith %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
